@@ -1,17 +1,23 @@
 classdef Simulation < handle
     % Vars
     properties
-        % Handle
-        simulation;
+        simulation;     % Handle
+        cliDebug;       % Flag for CLI Debug
     end
     % Const Vars
     properties(Constant)
-        CLI_DEBUG = true;
+
     end
     
     methods
-        function self = Simulation()
-            if(CLI_DEBUG); disp("Simulation constructor");end
+        % Constructor
+        function self = Simulation(cliDebugVal)
+            self.cliDebug = cliDebugVal;
+            if(self.cliDebug); disp("[SIM] Simulation constructor"); end
+        end
+        %Deconstructor
+        function delete(self)
+            if(self.cliDebug); disp("[SIM] Simulation deconstructor"); end
         end
     end
 end
