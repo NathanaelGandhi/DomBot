@@ -3,8 +3,8 @@ DomBot group code for Assignment 2 - Industrial Robotics 41013
 
 ## Group Members:
 - Koda Enoka - 12580748
-- Travis Goodshaw - 12912770
 - Nathanael Gandhi - 12966382
+- Travis Goodshaw - 12912770
 
 ## Introduction
 ### Scope
@@ -15,25 +15,33 @@ For the project task, we need to use a robot arm which can grip and would be sui
 
 ##Design conisderations
 - Use classes
-- GUI app acts as "main"
+- APP (GUI) acts as "main"
 
-- gui
-- @Simulation
-	- setup environment
-	
-	- choose domino
-	- move domino
-		- pickUp
-			- goal pose
-			- move to pose
-			- pickup
-		- move to final pose
-		- drop
-- @Domino
-- @Extinguisher
-	- Safety equipment to be located in the environment
-- @myCobot
-- @StopButton
-	- Safety equipment to be located in the environment
-- @Table
-	- Equipment to be located in the environment
+- APP (gui)
+	- DomBot.mlapp
+		- Create Log, Simulation objects
+- @Log
+	- Log.m	
+		- Class to log messages to command window
+		- Accessable as superclass
+- @Simulation < @Log
+	- Simulation.m
+		- Create Domino, Extinguisher, MyCobot, StopButton, Table objects
+		- Create environment (floor, sidewalls)
+- @Domino < @Log
+	- Domino.m
+		- Object(s) to be picked up by robot
+- @Extinguisher < @Log
+	- Extinguisher.m
+		- Safety equipment to be located in the environment
+- @MyCobot < @Log
+	- MyCobot.m
+		- Chosen robot
+		- https://www.elephantrobotics.com/en/mycobot-en/
+- @StopButton < @Log
+	- StopButton.m
+		- Safety equipment to be located in the environment
+- @Table < @Log
+	- Table.m
+		- Equipment to be located in the environment
+		- Robot & dominos to be placed on table
