@@ -1,4 +1,4 @@
-classdef myCobot < handle
+classdef myCobot < Log
     %% Properties
     properties
         model;
@@ -25,6 +25,7 @@ classdef myCobot < handle
     %% Methods    
     methods
         function self = myCobot()
+            self@Log();     % Superclass Log
             self.GetmyCobotRobot();
             
             self.PlotAndColourRobot();%robot,workspace);

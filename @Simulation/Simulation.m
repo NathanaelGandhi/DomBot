@@ -11,7 +11,7 @@ classdef Simulation < Log
     methods
         % Constructor
         function self = Simulation()
-            self@Log();
+            self@Log();     % Superclass Log
             LogInfo(self,'[SIM] Simulation constructor');
         end
         %Deconstructor
