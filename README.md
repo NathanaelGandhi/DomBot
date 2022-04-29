@@ -13,7 +13,7 @@ SafeCo wants us to investigate the possible applications for robot arms in the h
 ### Robot Arm
 For the project task, we need to use a robot arm which can grip and would be suitable in the homes of consumers. Therefore, my group decided to use the robotic arm MyCobot and a gripper end effector by Elephant Robotics. The main reasons that this collaborative robot arm is ideal for our project because it has 6 degrees of freedom and detailed documentation that has the joint descriptions and dimensions which would allow us to model the MyCobot DH parameters. This robot arm is also relatively small and light weight (850g) when compared to most robotic arms, so it would be safer to use in homes.
 
-##Design conisderations
+## Design Conisderations
 - Use classes
 - APP (GUI) acts as "main"
 
