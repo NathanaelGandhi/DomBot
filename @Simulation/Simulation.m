@@ -87,16 +87,22 @@ classdef Simulation < handle
             MyCobotPose = transl(-0.05, -0.27, 0.1) * trotz(pi/2);  % MyCobot Pose
             self.AddEnvironmentObject(MyCobot(self.logObj, MyCobotPose));   % Spawn single object
             
-            % StopButton Object
+            % StopButton Objects
             StopButtonPose = {transl(1.2,1.8,1),transl(-1.2,1.8,1)};  % StopButton Poses
-            for i = 1:numel(StopButtonPose);
-               self.AddEnvironmentObject(StopButton(self.logObj, StopButtonPose{i}));   % Spawn single object 
+            for i = 1:numel(StopButtonPose)
+                self.AddEnvironmentObject(StopButton(self.logObj, StopButtonPose{i}));   % Spawn single object 
             end
                         
-            % Extinguisher Object
+            % Extinguisher Objects
             ExtinguisherPose = {transl(1.2,2.2,0),transl(-1.2,2.2,0)};  % Extinguisher Poses
-            for i = 1:numel(ExtinguisherPose);
-               self.AddEnvironmentObject(Extinguisher(self.logObj, ExtinguisherPose{i}));   % Spawn single object 
+            for i = 1:numel(ExtinguisherPose)
+                self.AddEnvironmentObject(Extinguisher(self.logObj, ExtinguisherPose{i}));   % Spawn single object 
+            end
+            
+            % Domino Objects
+            for i = 1:self.dominosTotal
+                DominoPose = transl(-0.05+rand(), -0.27+rand(), 0.1);  % Domino Poses
+                self.AddEnvironmentObject(Domino(self.logObj, DominoPose));   % Spawn single object 
             end
         end
         

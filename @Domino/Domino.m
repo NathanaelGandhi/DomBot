@@ -1,11 +1,6 @@
-classdef Domino < Log
+classdef Domino < EnvironmentObject
     properties
         model;  % Handle
-        logOb;  % Log object
-        
-        % Current pose of domino
-        pose;
-        
         % Final pose
         desiredPose;
         
@@ -18,8 +13,9 @@ classdef Domino < Log
     
     methods %% Class for Domino simulation
         function self = Domino(logArg, pose)
-            self.logOb = logArg;    % Store log object
-            self.logOb.LogInfo('[DOM] Domino constructor');
+            % Call superclass constructor
+            self = self@EnvironmentObject(logArg, pose, 'domino');
+            
             % Read ply file
             [tris,verts,data] = plyread('Domino.ply','tri');
             % Set vertex count to use in transforms
