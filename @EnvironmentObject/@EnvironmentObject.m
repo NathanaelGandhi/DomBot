@@ -8,16 +8,15 @@ classdef EnvironmentObject < handle
     end
     
     methods%% Class for Table simulation
-        function self = EnvironmentObject(logArg, type, id, pose)
+        function self = EnvironmentObject(logArg, type, pose)
             self.logObj = logArg;   % Store log object
             self.logObj.LogInfo('[TBL] Table constructor');
             % Store type param
-            if nargin < 4           % Check number of function input arguments
+            if nargin < 3           % Check number of function input arguments
                 obj.type = 'generic' ;
             else
                 obj.type = type ;
             end
-            self.id = id;           % Store id param
             self.pose = pose;       % Store Pose param
         end
     end
