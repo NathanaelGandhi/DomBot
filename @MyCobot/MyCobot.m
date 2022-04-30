@@ -2,7 +2,7 @@ classdef MyCobot < EnvironmentObject
     %% Properties
     properties
         model;  % Class object
-        workspace = [-0.5 0.5 -0.5 0.5 -0.01 1];  
+        workspace;
         radiusOfMotion = 0.28; %280 mm range of motion from MyCobot manual 
         rangeOfMotionPlot;
         
@@ -21,18 +21,8 @@ classdef MyCobot < EnvironmentObject
             sq = tr2(1:3, 4)-tr1(1:3, 4);
             distance = sqrt(transpose(sq)*sq);
         end
-    end
-    %% Methods    
-    methods
-        function self = MyCobot(logArg, id, pose)
-            % Call superclass constructor
-            self = self@EnvironmentObject(logArg, id, pose, 'mycobot');
-            
-            self = self.GetMyCobotRobot();
-            
-            self.PlotAndColourRobot();%robot,workspace);
-        end
-        function self = GetMyCobotRobot(self)
+        
+        function model = GetMyCobotRobot()
             pause(0.001);
             name = ['MyCobot_',datestr(now,'yyyymmddTHHMMSSFFF')];
             L(1) = Link('d', 0.13156, 'a', 0, 'alpha', pi/2);
@@ -55,10 +45,29 @@ classdef MyCobot < EnvironmentObject
             L(5).qlim = (pi/180)*[-165 165];
             L(6).qlim = (pi/180)*[-175 175];
             
-            self.model = SerialLink(L, 'name', name);
-            
-            
+            model = SerialLink(L, 'name', name);
         end
+    end
+    %% Methods    
+    methods
+        % Constructor
+        function self = MyCobot(logArg, id, pose)
+            % Call superclass constructor
+            self = self@EnvironmentObject(logArg, id, pose, 'mycobot');
+            self.workspace = self.SetMyCobotWorkspace();
+            self.model = self.GetMyCobotRobot();
+            self.PlotAndColourRobot();                          %robot,workspace);
+        end
+        
+        function workspace = SetMyCobotWorkspace(self)
+            workspaceOffset = [-0.5 0.5 -0.5 0.5 -0.01 1];      % Where did these offsets come from and why is zMin -0.1?
+            % below could be done better with loops
+            workspace = [...
+                (self.pose(13)+workspaceOffset(1)) (self.pose(13)+workspaceOffset(2)) ...   % x-axis
+                (self.pose(14)+workspaceOffset(3)) (self.pose(14)+workspaceOffset(4)) ...   % y-axis
+                (self.pose(15)+workspaceOffset(5)) (self.pose(15)+workspaceOffset(6))];     % z-axis
+        end
+
         %% PlotAndColourRobot
         function PlotAndColourRobot(self)
             for linkIndex = 0:self.model.n
@@ -134,7 +143,7 @@ classdef MyCobot < EnvironmentObject
         end
         
         %% runs jtraj calculation 
-        function runTraj(self)
+        function self = runTraj(self)
             if self.steps > 0            
                 for i = 1:self.steps
                     self.model.animate(self.Traj(i,:));
