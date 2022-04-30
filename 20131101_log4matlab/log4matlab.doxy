@@ -1,0 +1,88 @@
+/*! \page UsageNotes log4matlab Class Usage Notes
+\section Usinglog4matlab Using log4matlab
+
+This has been a very useful tool for logging from multiple classes. 
+If the logger is made a singleton for a project then all classes can write their log messages to the same file. 
+This logger supports Debug messags, warning messages and error messages. 
+It logs to the time in milliseconds when the message was sent
+
+In order to set the file with which to log to
+\verbatim
+L = log4matlab('logFileName.log');
+\endverbatim
+
+To log a debug message about a class called 'myClassName'
+\verbatim
+L.mlog = {L.DEBUG,'myClassName','This is a debug message'};
+\endverbatim
+
+To log a warning message about a function called 'SomeFunction'
+\verbatim
+L.mlog = {L.WARN,'SomeFunction','This is a warning message'};
+\endverbatim
+
+To log a error message about a script called 'ThisIsArbitrary'
+\verbatim
+L.mlog = {L.ERROR,'ThisIsArbitrary','This is a error message'};
+\endverbatim
+
+To set the logger level for class called 'myClassName' so that only warnings and errors are shown. 
+Then to send 3 log messages of which only 2 will now be logged
+\verbatim
+L.SetLoggerLevel('myClassName',L.WARN)
+L.mlog = {L.DEBUG,'myClassName','This is a debug message'};
+L.mlog = {L.WARN,'myClassName','This is a warning message'};
+L.mlog = {L.ERROR,'myClassName','This is a error message'};
+\endverbatim
+
+To set the logger level for function called 'SomeFunction' so that only errors are shown. 
+Then to send 3 log messages of which only 1 will now be logged
+\verbatim
+L.SetLoggerLevel('SomeFunction',L.ERROR)
+L.mlog = {L.DEBUG,'SomeFunction','This is a debug message'};
+L.mlog = {L.WARN,'SomeFunction','This is a warning message'};
+L.mlog = {L.ERROR,'SomeFunction','This is a error message'};
+\endverbatim
+
+To get the logger level for myClassName, SomeFunction and ThisIsArbitrary and see they are equal to what we expect
+\verbatim
+L.GetLoggerLevel('myClassName') == L.WARN
+L.GetLoggerLevel('SomeFunction') == L.ERROR
+L.GetLoggerLevel('ThisIsArbitrary') == L.DEBUG
+\endverbatim
+
+To allow WARN and ERROR messages be printed to the command window
+\verbatim
+L.SetCommandWindowLevel(L.WARN)
+\endverbatim
+
+To set back to no message printed to the command window
+\verbatim
+L.SetCommandWindowLevel(L.NONE)
+\endverbatim
+
+To log a matrix
+\verbatim
+L.mlog = {L.DEBUG,'myClassName',['The transform is ',L.MatrixToString(eye(4))]};
+\endverbatim
+
+To Log an exception
+\verbatim
+try a(0)
+catch ME
+	L.mlog = {L.DEBUG,'myClassName',['There was an error',L.ExceptionToString(ME)]};
+end
+\endverbatim
+
+To get the name of the current function inside a class see the example in TestClass2.m and the following line
+\verbatim
+self.L.mlog = {self.L.DEBUG,mfilename('class'),[self.L.Me,'a =',num2str(a)]};
+\endverbatim
+
+For more details see \ref log4matlab
+
+*/
+
+/** \page log4matlab log4matlab
+\htmlinclude log4matlab.html
+*/

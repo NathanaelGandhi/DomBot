@@ -1,7 +1,7 @@
 classdef Table < Log
     properties
-        % Handle
-        model;
+        model;  % Handle
+        logOb;  % Log object
         
         % Position of fire table
         pose;
@@ -11,8 +11,10 @@ classdef Table < Log
     end
     
     methods%% Class for Table simulation
-        function self = Table(pose)
-            self@Log();     % Superclass Log
+        function self = Table(logArg, pose)
+            self.logOb = logArg;    % Store log object
+            self.logOb.LogInfo('[TBL] Table constructor');
+            
             % I'm using this method as 'PlaceObject' can't rotate the table
             % Read ply file
             [tris,verts,data] = plyread('Table.ply','tri');  

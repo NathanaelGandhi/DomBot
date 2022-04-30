@@ -1,7 +1,7 @@
 classdef StopButton < Log
     properties
-        % Handle
-        model;
+        model;  % Handle
+        logOb;  % Log object
         
         % Position of fire StopButton
         pose;
@@ -11,8 +11,10 @@ classdef StopButton < Log
     end
     
     methods%% Class for Stop Button simulation
-        function self = StopButton(pose)
-            self@Log();     % Superclass Log
+        function self = StopButton(logArg, pose)
+            self.logOb = logArg;    % Store log object
+            self.logOb.LogInfo('[STP] StopButton constructor');
+            
             % Read ply file
             [tris,verts,data] = plyread('StopButton.ply','tri');
             % Set vertex count for use in transforms
