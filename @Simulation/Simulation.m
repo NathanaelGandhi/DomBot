@@ -4,7 +4,7 @@ classdef Simulation < handle
         logObj;         % Log object
         simRunning;     % Flag for simulation desired state
         envObjList;
-
+        dominosTotal;
     end
     % Const Vars
     properties(Constant)
@@ -18,9 +18,10 @@ classdef Simulation < handle
     
     methods
         % Constructor
-        function self = Simulation(logArg)
-            self.logObj = logArg;    % Store log object
+        function self = Simulation(logArg, dominosTotal)
+            self.logObj = logArg;                   % Store log object
             self.logObj.LogInfo('[SIM] Simulation constructor');
+            self.dominosTotal = dominosTotal;       % Set the number of dominos
             genericList = {};
             tableList = {};
             myCobotList = {};
