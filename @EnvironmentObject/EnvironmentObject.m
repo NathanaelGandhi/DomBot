@@ -1,12 +1,12 @@
 classdef EnvironmentObject
     properties
         logObj;     % Log object
-        envObj;     % Environment object
         type;       % Environment object type
         pose;       % Environment object Pose
     end
     
     methods%% Class for Table simulation
+        % Constructor
         function self = EnvironmentObject(logArg, pose, type)
             self.logObj = logArg;   % Store log object
             % Store type param
