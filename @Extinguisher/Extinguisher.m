@@ -1,19 +1,14 @@
-classdef Extinguisher < Log
+classdef Extinguisher < EnvironmentObject
     properties
-        model;  % Handle
-        logOb;  % Log object
-        
-        % Position of fire extinguisher
-        pose;
-        
-        % Vertex count
-        extinguisherVertexCount;
+        model;                      % Class object
+        extinguisherVertexCount;    % Vertex count
     end
     
     methods%% Class for Fire Extinguisher simulation
-        function self = Extinguisher(logArg, pose)
-            self.logOb = logArg;    % Store log object
-            self.logOb.LogInfo('[EXT] Extinguisher constructor');
+        function self = Extinguisher(logArg, id, pose)
+            % Call superclass constructor
+            self = self@EnvironmentObject(logArg, id, pose, 'extinguisher');
+            
             % Read ply file
             [tris,verts,data] = plyread('Extinguisher.ply','tri');
             % Set vertex count for use in transforms
