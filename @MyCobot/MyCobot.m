@@ -1,8 +1,7 @@
-classdef MyCobot < Log
+classdef MyCobot < EnvironmentObject
     %% Properties
     properties
-        model;  % Handle
-        logOb;  % Log object
+        model;  % Class object
         workspace = [-0.5 0.5 -0.5 0.5 -0.01 1];  
         radiusOfMotion = 0.28; %280 mm range of motion from MyCobot manual 
         rangeOfMotionPlot;
@@ -25,15 +24,15 @@ classdef MyCobot < Log
     end
     %% Methods    
     methods
-        function self = MyCobot(logArg)
-            self.logOb = logArg;    % Store log object
-            self.logOb.LogInfo('[MCB] MyCobot constructor');
+        function self = MyCobot(logArg, pose)
+            % Call superclass constructor
+            self = self@EnvironmentObject(logArg, pose, 'mycobot');
             
-            self.GetMyCobotRobot();
+            self = self.GetMyCobotRobot();
             
             self.PlotAndColourRobot();%robot,workspace);
         end
-        function GetMyCobotRobot(self)
+        function self = GetMyCobotRobot(self)
             pause(0.001);
             name = ['MyCobot_',datestr(now,'yyyymmddTHHMMSSFFF')];
             L(1) = Link('d', 0.13156, 'a', 0, 'alpha', pi/2);
@@ -64,7 +63,7 @@ classdef MyCobot < Log
         function PlotAndColourRobot(self)
             for linkIndex = 0:self.model.n
                 
-                [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['MyCobot_Links\MyCobotLink',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>
+                [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['MyCobot_Links/MyCobotLink',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>
                 
                 self.model.faces{linkIndex+1} = faceData;
                 self.model.points{linkIndex+1} = vertexData;
