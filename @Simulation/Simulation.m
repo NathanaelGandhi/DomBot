@@ -86,7 +86,7 @@ classdef Simulation < handle
             end
 
             % MyCobot Object
-            MyCobotPose = {transl(-0.05, -0.27, 1)};                            % MyCobot Pose
+            MyCobotPose = {transl(1, 1, 1)};                            % MyCobot Pose
             for i = 1:numel(MyCobotPose)
                 self.AddEnvironmentObject(MyCobot(self.logObj, i, MyCobotPose{i}));             % Spawn single object
             end
@@ -105,8 +105,19 @@ classdef Simulation < handle
             
             % Domino Objects
             dominoZOffset = 0.025;   %meters offset as centrepoint is standard pose
+            robotReach = 0.28;       %280 mm range of motion from MyCobot manual
             for i = 1:self.dominosTotal
-                DominoPose = transl(-0.05+rand(), -0.27+rand(), 1+dominoZOffset);                           % Domino Poses
+                randX = rand();
+                randY = rand();
+                % This is crap, in theory could loop forever & doesnt check
+                % it collides with something existing
+                while(randX>robotReach)
+                    randX = rand();
+                end
+                while(randY>robotReach)
+                    randY = rand();
+                end
+                DominoPose = transl(0+rand(), 0+rand(), 1+dominoZOffset);               % Domino Poses
                 self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));                  % Spawn single object 
             end
         end
