@@ -1,7 +1,8 @@
 classdef MyCobot < Log
     %% Properties
     properties
-        model;
+        model;  % Handle
+        logOb;  % Log object
         workspace = [-0.5 0.5 -0.5 0.5 -0.01 1];  
         radiusOfMotion = 0.28; %280 mm range of motion from MyCobot manual 
         rangeOfMotionPlot;
@@ -24,8 +25,10 @@ classdef MyCobot < Log
     end
     %% Methods    
     methods
-        function self = MyCobot()
-            self@Log();     % Superclass Log
+        function self = MyCobot(logArg)
+            self.logOb = logArg;    % Store log object
+            self.logOb.LogInfo('[MCB] MyCobot constructor');
+            
             self.GetMyCobotRobot();
             
             self.PlotAndColourRobot();%robot,workspace);

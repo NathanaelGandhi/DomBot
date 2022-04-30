@@ -1,7 +1,7 @@
 classdef Extinguisher < Log
     properties
-        % Handle
-        model;
+        model;  % Handle
+        logOb;  % Log object
         
         % Position of fire extinguisher
         pose;
@@ -11,8 +11,9 @@ classdef Extinguisher < Log
     end
     
     methods%% Class for Fire Extinguisher simulation
-        function self = Extinguisher(pose)
-            self@Log();     % Superclass Log
+        function self = Extinguisher(logArg, pose)
+            self.logOb = logArg;    % Store log object
+            self.logOb.LogInfo('[EXT] Extinguisher constructor');
             % Read ply file
             [tris,verts,data] = plyread('Extinguisher.ply','tri');
             % Set vertex count for use in transforms
