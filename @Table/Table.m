@@ -6,9 +6,9 @@ classdef Table < EnvironmentObject
     end
     
     methods%% Class for Table simulation
-        function self = Table(logArg, pose)
+        function self = Table(logArg, id, pose)
             % Call superclass constructor
-            self = self@EnvironmentObject(logArg, pose, 'table');
+            self = self@EnvironmentObject(logArg, id, pose, 'table');
             self.DrawTable();
         end
         

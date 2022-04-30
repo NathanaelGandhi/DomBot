@@ -12,9 +12,9 @@ classdef Domino < EnvironmentObject
     end
     
     methods %% Class for Domino simulation
-        function self = Domino(logArg, pose)
+        function self = Domino(logArg, id, pose)
             % Call superclass constructor
-            self = self@EnvironmentObject(logArg, pose, 'domino');
+            self = self@EnvironmentObject(logArg, id, pose, 'domino');
             
             % Read ply file
             [tris,verts,data] = plyread('Domino.ply','tri');

@@ -7,9 +7,9 @@ classdef StopButton < EnvironmentObject
     end
     
     methods%% Class for Stop Button simulation
-        function self = StopButton(logArg, pose)
+        function self = StopButton(logArg, id, pose)
             % Call superclass constructor
-            self = self@EnvironmentObject(logArg, pose, 'stopButton');
+            self = self@EnvironmentObject(logArg, id, pose, 'stopButton');
             
             % Read ply file
             [tris,verts,data] = plyread('StopButton.ply','tri');

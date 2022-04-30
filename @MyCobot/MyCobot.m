@@ -24,9 +24,9 @@ classdef MyCobot < EnvironmentObject
     end
     %% Methods    
     methods
-        function self = MyCobot(logArg, pose)
+        function self = MyCobot(logArg, id, pose)
             % Call superclass constructor
-            self = self@EnvironmentObject(logArg, pose, 'mycobot');
+            self = self@EnvironmentObject(logArg, id, pose, 'mycobot');
             
             self = self.GetMyCobotRobot();
             

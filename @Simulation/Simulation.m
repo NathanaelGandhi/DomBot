@@ -80,29 +80,33 @@ classdef Simulation < handle
             self.logObj.LogDebug('[SIM] SpawnEnvironmentObjects()');
             
             % Table Object
-            tablePose = transl(0,0,1) * trotz(pi/2);                    % Table Pose
-            self.AddEnvironmentObject(Table(self.logObj, tablePose));   % Spawn single object
+            tablePose = {transl(0,0,1) * trotz(pi/2)};                                          % Table Pose
+            for i = 1:numel(tablePose)
+                self.AddEnvironmentObject(Table(self.logObj, i, tablePose{i}));                    % Spawn single object
+            end
 
             % MyCobot Object
-            MyCobotPose = transl(-0.05, -0.27, 0.1) * trotz(pi/2);  % MyCobot Pose
-            self.AddEnvironmentObject(MyCobot(self.logObj, MyCobotPose));   % Spawn single object
+            MyCobotPose = {transl(-0.05, -0.27, 0.1) * trotz(pi/2)};                            % MyCobot Pose
+            for i = 1:numel(MyCobotPose)
+                self.AddEnvironmentObject(MyCobot(self.logObj, i, MyCobotPose{i}));                % Spawn single object
+            end
             
             % StopButton Objects
-            StopButtonPose = {transl(1.2,1.8,1),transl(-1.2,1.8,1)};  % StopButton Poses
+            StopButtonPose = {transl(1.2,1.8,1),transl(-1.2,1.8,1)};                            % StopButton Poses
             for i = 1:numel(StopButtonPose)
-                self.AddEnvironmentObject(StopButton(self.logObj, StopButtonPose{i}));   % Spawn single object 
+                self.AddEnvironmentObject(StopButton(self.logObj, i, StopButtonPose{i}));       % Spawn single object 
             end
                         
             % Extinguisher Objects
-            ExtinguisherPose = {transl(1.2,2.2,0),transl(-1.2,2.2,0)};  % Extinguisher Poses
+            ExtinguisherPose = {transl(1.2,2.2,0),transl(-1.2,2.2,0)};                          % Extinguisher Poses
             for i = 1:numel(ExtinguisherPose)
-                self.AddEnvironmentObject(Extinguisher(self.logObj, ExtinguisherPose{i}));   % Spawn single object 
+                self.AddEnvironmentObject(Extinguisher(self.logObj, i, ExtinguisherPose{i}));   % Spawn single object 
             end
             
             % Domino Objects
             for i = 1:self.dominosTotal
-                DominoPose = transl(-0.05+rand(), -0.27+rand(), 0.1);  % Domino Poses
-                self.AddEnvironmentObject(Domino(self.logObj, DominoPose));   % Spawn single object 
+                DominoPose = transl(-0.05+rand(), -0.27+rand(), 0.1);                           % Domino Poses
+                self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));                  % Spawn single object 
             end
         end
         

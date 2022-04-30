@@ -5,9 +5,9 @@ classdef Extinguisher < EnvironmentObject
     end
     
     methods%% Class for Fire Extinguisher simulation
-        function self = Extinguisher(logArg, pose)
+        function self = Extinguisher(logArg, id, pose)
             % Call superclass constructor
-            self = self@EnvironmentObject(logArg, pose, 'extinguisher');
+            self = self@EnvironmentObject(logArg, id, pose, 'extinguisher');
             
             % Read ply file
             [tris,verts,data] = plyread('Extinguisher.ply','tri');
