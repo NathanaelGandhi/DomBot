@@ -8,7 +8,7 @@ classdef EnvironmentObject < handle
     end
     
     methods%% Class for Table simulation
-        function self = EnvironmentObject(logArg, type, pose)
+        function self = EnvironmentObject(logArg, pose, type)
             self.logObj = logArg;   % Store log object
             % Store type param
             if nargin < 3           % Check number of function input arguments
