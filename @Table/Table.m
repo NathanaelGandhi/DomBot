@@ -1,5 +1,6 @@
 classdef Table < EnvironmentObject
     properties
+        model;  % Class object
         % Vertex count
         tableVertexCount;
     end
@@ -8,7 +9,11 @@ classdef Table < EnvironmentObject
         function self = Table(logArg, pose)
             % Call superclass constructor
             self = self@EnvironmentObject(logArg, pose, 'table');
-            
+            self.DrawTable();
+        end
+        
+        % Function to draw the table
+        function DrawTable(self)
             % I'm using this method as 'PlaceObject' can't rotate the table
             % Read ply file
             [tris,verts,data] = plyread('Table.ply','tri');  
@@ -19,7 +24,7 @@ classdef Table < EnvironmentObject
             % Update vertexes for new pose
             updatedPoints = [self.pose * [verts,ones(self.tableVertexCount,1)]']';
             % Then plot the trisurf with verticies
-            self.envObj = trisurf(tris,updatedPoints(:,1), updatedPoints(:,2), updatedPoints(:,3) ...
+            self.model = trisurf(tris,updatedPoints(:,1), updatedPoints(:,2), updatedPoints(:,3) ...
                 ,'FaceVertexCData',vertexColours,'EdgeColor','interp','EdgeLighting','flat');
         end
     end
