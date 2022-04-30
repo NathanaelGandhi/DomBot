@@ -1,10 +1,6 @@
-classdef StopButton < Log
+classdef StopButton < EnvironmentObject
     properties
-        model;  % Handle
-        logOb;  % Log object
-        
-        % Position of fire StopButton
-        pose;
+        model;  % Class object
         
         % Vertex count
         stopButtonVertexCount;
@@ -12,8 +8,8 @@ classdef StopButton < Log
     
     methods%% Class for Stop Button simulation
         function self = StopButton(logArg, pose)
-            self.logOb = logArg;    % Store log object
-            self.logOb.LogInfo('[STP] StopButton constructor');
+            % Call superclass constructor
+            self = self@EnvironmentObject(logArg, pose, 'stopButton');
             
             % Read ply file
             [tris,verts,data] = plyread('StopButton.ply','tri');

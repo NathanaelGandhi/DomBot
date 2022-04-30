@@ -85,6 +85,12 @@ classdef Simulation < handle
             % MyCobot Object
             MyCobotPose = transl(-0.05, -0.27, 0.1) * trotz(pi/2);  % MyCobot Pose
             self.AddEnvironmentObject(MyCobot(self.logObj, MyCobotPose));   % Spawn single object
+            
+            % StopButton Object
+            StopButtonPose = {transl(1.2,1.8,1),transl(-1.2,1.8,1)};  % StopButton Poses
+            for i = 1:numel(StopButtonPose);
+               self.AddEnvironmentObject(StopButton(self.logObj, StopButtonPose{i}));   % Spawn single object 
+            end
         end
         
         % Function to set the simulation running flag
