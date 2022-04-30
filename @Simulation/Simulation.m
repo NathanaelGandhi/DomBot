@@ -91,6 +91,12 @@ classdef Simulation < handle
             for i = 1:numel(StopButtonPose);
                self.AddEnvironmentObject(StopButton(self.logObj, StopButtonPose{i}));   % Spawn single object 
             end
+                        
+            % Extinguisher Object
+            ExtinguisherPose = {transl(1.2,2.2,0),transl(-1.2,2.2,0)};  % Extinguisher Poses
+            for i = 1:numel(ExtinguisherPose);
+               self.AddEnvironmentObject(Extinguisher(self.logObj, ExtinguisherPose{i}));   % Spawn single object 
+            end
         end
         
         % Function to set the simulation running flag
