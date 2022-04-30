@@ -12,7 +12,7 @@ classdef Simulation < handle
     methods
         % Constructor
         function self = Simulation(logArg)
-            self.logOb = logArg;
+            self.logOb = logArg;    % Store log object
             self.logOb.LogInfo('[SIM] Simulation constructor');
             %GenerateEnvironment();
         end
