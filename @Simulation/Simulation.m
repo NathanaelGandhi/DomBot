@@ -1,7 +1,8 @@
-classdef Simulation < Log
+classdef Simulation < handle
     % Vars
     properties
         simulation;     % Handle
+        logOb;
     end
     % Const Vars
     properties(Constant)
@@ -10,23 +11,20 @@ classdef Simulation < Log
     
     methods
         % Constructor
-        function self = Simulation()
-%             self@Log();
-            LogInfo(self,'[SIM] Simulation constructor');
-            %logOb.LogInfo(self,'[SIM]');
+        function self = Simulation(logArg)
+            self.logOb = logArg;
+            self.logOb.LogInfo('[SIM] Simulation constructor');
             %GenerateEnvironment();
         end
         %Deconstructor
         function delete(self)
-            LogInfo(self,'[SIM] Simulation deconstructor');
+            self.logOb.LogInfo('[SIM] Simulation deconstructor');
         end
         function GenerateEnvironment(self)
-            LogInfo(self,'[SIM] GenerateEnvironment()');
-            disp('[SIM] Disp GenerateEnvironment()');
-            %Generate Environment
-            %   Detailed explanation goes here
-            % Concrete Floor
+            self.logOb.LogDebug('[SIM] GenerateEnvironment()');
+            % Generate Environment
             hold off
+            % Concrete Floor
             surf([-4,-4;4,4],[-4,4;-4,4],[0,0;0,0],'CData',imread('assets/concrete.jpg'),'FaceColor','texturemap');
             hold on
             % Side Walls - remove top for viewing
