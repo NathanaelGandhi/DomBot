@@ -82,13 +82,13 @@ classdef Simulation < handle
             % Table Object
             tablePose = {transl(0,0,1) * trotz(pi/2)};                                          % Table Pose
             for i = 1:numel(tablePose)
-                self.AddEnvironmentObject(Table(self.logObj, i, tablePose{i}));                    % Spawn single object
+                self.AddEnvironmentObject(Table(self.logObj, i, tablePose{i}));                 % Spawn single object
             end
 
             % MyCobot Object
             MyCobotPose = {transl(-0.05, -0.27, 0.1) * trotz(pi/2)};                            % MyCobot Pose
             for i = 1:numel(MyCobotPose)
-                self.AddEnvironmentObject(MyCobot(self.logObj, i, MyCobotPose{i}));                % Spawn single object
+                self.AddEnvironmentObject(MyCobot(self.logObj, i, MyCobotPose{i}));             % Spawn single object
             end
             
             % StopButton Objects
@@ -104,8 +104,9 @@ classdef Simulation < handle
             end
             
             % Domino Objects
+            dominoZOffset = 0.025;   %meters offset as centrepoint is standard pose
             for i = 1:self.dominosTotal
-                DominoPose = transl(-0.05+rand(), -0.27+rand(), 0.1);                           % Domino Poses
+                DominoPose = transl(-0.05+rand(), -0.27+rand(), 1+dominoZOffset);                           % Domino Poses
                 self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));                  % Spawn single object 
             end
         end
