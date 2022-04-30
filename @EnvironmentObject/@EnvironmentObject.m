@@ -8,7 +8,7 @@ classdef EnvironmentObject < handle
     end
     
     methods%% Class for Table simulation
-        function self = Table(logArg, type, id, pose)
+        function self = EnvironmentObject(logArg, type, id, pose)
             self.logObj = logArg;   % Store log object
             self.logObj.LogInfo('[TBL] Table constructor');
             % Store type param
