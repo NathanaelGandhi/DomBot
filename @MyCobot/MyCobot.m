@@ -1,9 +1,9 @@
-classdef myCobot < handle
+classdef MyCobot < Log
     %% Properties
     properties
         model;
         workspace = [-0.5 0.5 -0.5 0.5 -0.01 1];  
-        radiusOfMotion = 0.28; %280 mm range of motion from myCobot manual 
+        radiusOfMotion = 0.28; %280 mm range of motion from MyCobot manual 
         rangeOfMotionPlot;
         
         %variables for calculating trajectory
@@ -24,14 +24,15 @@ classdef myCobot < handle
     end
     %% Methods    
     methods
-        function self = myCobot()
-            self.GetmyCobotRobot();
+        function self = MyCobot()
+            self@Log();     % Superclass Log
+            self.GetMyCobotRobot();
             
             self.PlotAndColourRobot();%robot,workspace);
         end
-        function GetmyCobotRobot(self)
+        function GetMyCobotRobot(self)
             pause(0.001);
-            name = ['myCobot_',datestr(now,'yyyymmddTHHMMSSFFF')];
+            name = ['MyCobot_',datestr(now,'yyyymmddTHHMMSSFFF')];
             L(1) = Link('d', 0.13156, 'a', 0, 'alpha', pi/2);
             L(2) = Link('d', -0.06639, 'a', 0.1104, 'alpha', 0);
             L(3) = Link('d', 0.06639, 'a', 0.096, 'alpha', 0);
@@ -60,7 +61,7 @@ classdef myCobot < handle
         function PlotAndColourRobot(self)
             for linkIndex = 0:self.model.n
                 
-                [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['myCobot_Links\myCobotLink',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>
+                [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['MyCobot_Links\MyCobotLink',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>
                 
                 self.model.faces{linkIndex+1} = faceData;
                 self.model.points{linkIndex+1} = vertexData;
@@ -118,9 +119,9 @@ classdef myCobot < handle
         %% calculates jtraj
         function Trajectory = calculateTraj(self, Transform, steps)
             %checks if inputed transform exceeds range of motion (280 mm)
-            if (myCobot.disTr(self.model.base()*transl(0,0, 0.13156), Transform) > 0.28)
-                disp('myCobot_ERROR: Transform exceeds myCobots Range of Motion');
-                disp('Possible_Solution: Input a transform that is within the 0.28m radius of your myCobot');
+            if (MyCobot.disTr(self.model.base()*transl(0,0, 0.13156), Transform) > 0.28)
+                disp('MyCobot_ERROR: Transform exceeds MyCobots Range of Motion');
+                disp('Possible_Solution: Input a transform that is within the 0.28m radius of your MyCobot');
             else
                 self.steps = steps;
                 self.q1 = self.model.getpos;
@@ -139,7 +140,7 @@ classdef myCobot < handle
                 end
                 self.steps = 0;
             else
-                disp('myCobot_ERROR: You have not calculated your trajectory yet');
+                disp('MyCobot_ERROR: You have not calculated your trajectory yet');
                 disp('Possible_Solution: Use "calculateTraj(self, transform, steps)" before using "runTraj(self)" ');
             end
            

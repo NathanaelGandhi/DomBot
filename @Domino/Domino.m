@@ -1,4 +1,4 @@
-classdef Domino < handle
+classdef Domino < Log
     properties
         % Handle
         model;
@@ -18,6 +18,7 @@ classdef Domino < handle
     
     methods %% Class for Domino simulation
         function self = Domino(pose)
+            self@Log();     % Superclass Log
             % Read ply file
             [tris,verts,data] = plyread('Domino.ply','tri');
             % Set vertex count to use in transforms

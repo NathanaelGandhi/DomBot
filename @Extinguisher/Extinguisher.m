@@ -1,4 +1,4 @@
-classdef Extinguisher < handle
+classdef Extinguisher < Log
     properties
         % Handle
         model;
@@ -12,6 +12,7 @@ classdef Extinguisher < handle
     
     methods%% Class for Fire Extinguisher simulation
         function self = Extinguisher(pose)
+            self@Log();     % Superclass Log
             % Read ply file
             [tris,verts,data] = plyread('Extinguisher.ply','tri');
             % Set vertex count for use in transforms

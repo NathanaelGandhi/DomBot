@@ -1,4 +1,4 @@
-classdef StopButton < handle
+classdef StopButton < Log
     properties
         % Handle
         model;
@@ -12,6 +12,7 @@ classdef StopButton < handle
     
     methods%% Class for Stop Button simulation
         function self = StopButton(pose)
+            self@Log();     % Superclass Log
             % Read ply file
             [tris,verts,data] = plyread('StopButton.ply','tri');
             % Set vertex count for use in transforms
