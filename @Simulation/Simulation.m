@@ -1,14 +1,19 @@
 classdef Simulation < handle
     % Vars
     properties
-        simulation;     % Handle
         logObj;         % Log object
-        simRunning      % Flag for simulation desired state
+        simRunning;     % Flag for simulation desired state
+        envObjList;
 
     end
     % Const Vars
     properties(Constant)
-
+        GENERIC = 1;
+        TABLE = 2;
+        MYCOBOT = 3;
+        STOPBUTTON = 4;
+        EXTINGUISHER = 5;
+        DOMINO = 6;
     end
     
     methods
@@ -16,7 +21,13 @@ classdef Simulation < handle
         function self = Simulation(logArg)
             self.logObj = logArg;    % Store log object
             self.logObj.LogInfo('[SIM] Simulation constructor');
-            %GenerateEnvironment();
+            genericList = {};
+            tableList = {};
+            myCobotList = {};
+            stopButtonList = {};
+            extinguisherList = {};
+            dominoList = {};
+            self.envObjList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList}
         end
         
         %Deconstructor
@@ -39,13 +50,41 @@ classdef Simulation < handle
             surf([-4,4;-4,4],[-4,-4;-4,-4],[3,3;0,0],'CData',imread('assets/BackWall.jpg'),'FaceColor','texturemap');
         end
         
+        % Function to add environment objects to the object list
+        function AddEnvironmentObject(self, envObj)
+           switch envObj.type
+               case 'table'
+                   id = numel(self.envObjList{self.TABLE} ) + 1;
+                   self.envObjList{self.TABLE}{id} = envObj; 
+               case 'mycobot'
+                   id = numel(self.envObjList{self.MYCOBOT} ) + 1;
+                   self.envObjList{self.MYCOBOT}{id} = envObj; 
+               case 'stopButton'
+                   id = numel(self.envObjList{self.STOPBUTTON} ) + 1;
+                   self.envObjList{self.STOPBUTTON}{id} = envObj; 
+               case 'extinguisher'
+                   id = numel(self.envObjList{self.EXTINGUISHER} ) + 1;
+                   self.envObjList{self.EXTINGUISHER}{id} = envObj; 
+               case 'domino'
+                   id = numel(self.envObjList{self.DOMINO} ) + 1;
+                   self.envObjList{self.DOMINO}{id} = envObj; 
+               otherwise
+                   id = numel(self.envObjList{self.GENERIC} ) + 1;
+                   self.envObjList{self.GENERIC}{id} = envObj; 
+           end
+        end
+        
         % Function to Spawn environment objects
-        function [tableObj] = SpawnEnvironmentObjects(self)
+        function SpawnEnvironmentObjects(self)
             self.logObj.LogDebug('[SIM] SpawnEnvironmentObjects()');
             
-            % MyTable Object
-            tablePose = transl(0,0,1) * trotz(pi/2);    % MyTable Pose
-            tableObj = Table(self.logObj, tablePose);   % Spawn single table object
+            % Table Object
+            tablePose = transl(0,0,1) * trotz(pi/2);                    % Table Pose
+            self.AddEnvironmentObject(Table(self.logObj, tablePose));   % Spawn single object
+
+            % MyCobot Object
+            MyCobotPose = transl(-0.05, -0.27, 0.1) * trotz(pi/2);  % MyCobot Pose
+            self.AddEnvironmentObject(MyCobot(self.logObj, MyCobotPose));   % Spawn single object
         end
         
         % Function to set the simulation running flag
@@ -59,7 +98,7 @@ classdef Simulation < handle
                % Sim running. Loop while flag condition is true 
                if (self.simRunning)
                    pause(1);
-%                    self.logObj.LogDebug('[SIM] Sim Running');    
+                    self.logObj.LogDebug('[SIM] Sim Running');    
                end
             end
              self.logObj.LogInfo('[SIM] Simulation Stopped');
