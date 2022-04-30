@@ -18,10 +18,13 @@ classdef Simulation < handle
             self.logOb.LogInfo('[SIM] Simulation constructor');
             %GenerateEnvironment();
         end
+        
         %Deconstructor
         function delete(self)
             self.logOb.LogInfo('[SIM] Simulation deconstructor');
         end
+        
+        % Function to Generate walls & floor surfaces
         function GenerateEnvironment(self)
             self.logOb.LogDebug('[SIM] GenerateEnvironment()');
             % Generate Environment
@@ -35,10 +38,12 @@ classdef Simulation < handle
             % Back Wall
             surf([-4,4;-4,4],[-4,-4;-4,-4],[3,3;0,0],'CData',imread('assets/BackWall.jpg'),'FaceColor','texturemap');
         end
+        
         % Function to set the simulation running flag
         function SetSimRunningFlag(self, flag)
             self.simRunning = flag;
         end
+        
         % Function to run simulation "main" loop
         function RunSim(self)
             while (self.simRunning)
@@ -50,5 +55,6 @@ classdef Simulation < handle
             end
              self.logOb.LogInfo('[SIM] Simulation Stopped');
         end
+        
     end
 end
