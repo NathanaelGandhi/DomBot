@@ -2,7 +2,7 @@ classdef MyCobot < EnvironmentObject
     %% Properties
     properties
         model;  % Class object
-        workspace;
+        workspace = [-0.5 0.5 -0.5 0.5 1 2];
         radiusOfMotion = 0.28; %280 mm range of motion from MyCobot manual 
         rangeOfMotionPlot;
         
@@ -54,7 +54,7 @@ classdef MyCobot < EnvironmentObject
         function self = MyCobot(logArg, id, pose)
             % Call superclass constructor
             self = self@EnvironmentObject(logArg, id, pose, 'mycobot');
-            self.workspace = self.SetMyCobotWorkspace();
+            %self.workspace = self.SetMyCobotWorkspace();
             self.model = self.GetMyCobotRobot();
             self.PlotAndColourRobot();                          %robot,workspace);
         end
