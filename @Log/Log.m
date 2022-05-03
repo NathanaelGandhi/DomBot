@@ -57,30 +57,35 @@ classdef Log < handle
             if(self.debug)
                 logOutput = [datestr(now,'HH:MM:SS'),' DEBUG: ',txt];
                 disp(logOutput);
+                self.Log2File(self.fileLoggerObj.DEBUG, logOutput);
             end
         end
         function LogInfo(self,txt)
             if(self.info)
                 logOutput = [datestr(now,'HH:MM:SS'),' INFO: ',txt];
                 disp(logOutput);
+                self.Log2File(self.fileLoggerObj.DEBUG, logOutput);
             end
         end
         function LogWarn(self,txt)
             if(self.warn)
                 logOutput = [datestr(now,'HH:MM:SS'),' WARN: ',txt];
                 disp(logOutput);
+                self.Log2File(self.fileLoggerObj.WARN, logOutput);
             end
         end
         function LogError(self,txt)
             if(self.error)
                 logOutput = [datestr(now,'HH:MM:SS'),' ERROR: ',txt];
                 disp(logOutput);
+                self.Log2File(self.fileLoggerObj.ERROR, logOutput);
             end
         end
         function LogFatal(self,txt)
             if(self.fatal)
                 logOutput = [datestr(now,'HH:MM:SS'),' FATAL: ',txt];
                 disp(logOutput);
+                self.Log2File(self.fileLoggerObj.ERROR, logOutput);
             end
         end
         function Log2File(self, level, txt)
