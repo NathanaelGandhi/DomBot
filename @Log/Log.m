@@ -55,42 +55,42 @@ classdef Log < handle
         % Print Log
         function LogDebug(self,txt)
             if(self.debug)
-                logOutput = [datestr(now,'HH:MM:SS'),' DEBUG: ',txt];
-                disp(logOutput);
-                self.Log2File(self.fileLoggerObj.DEBUG, logOutput);
+                logOutput = [datestr(now,'HH:MM:SS'),' DEBUG: ',txt];       % Create DEBUG message
+                disp(logOutput);                                            % Display to command window
+                self.Log2File(self.fileLoggerObj.DEBUG, logOutput);         % log4matlab Log to File
             end
         end
         function LogInfo(self,txt)
             if(self.info)
-                logOutput = [datestr(now,'HH:MM:SS'),' INFO: ',txt];
-                disp(logOutput);
-                self.Log2File(self.fileLoggerObj.DEBUG, logOutput);
+                logOutput = [datestr(now,'HH:MM:SS'),' INFO: ',txt];        % Create INFO message
+                disp(logOutput);                                            % Display to command window
+                self.Log2File(self.fileLoggerObj.DEBUG, logOutput);         % log4matlab Log to File
             end
         end
         function LogWarn(self,txt)
             if(self.warn)
-                logOutput = [datestr(now,'HH:MM:SS'),' WARN: ',txt];
-                disp(logOutput);
-                self.Log2File(self.fileLoggerObj.WARN, logOutput);
+                logOutput = [datestr(now,'HH:MM:SS'),' WARN: ',txt];        % Create WARN message
+                disp(logOutput);                                            % Display to command window
+                self.Log2File(self.fileLoggerObj.WARN, logOutput);          % log4matlab Log to File
             end
         end
         function LogError(self,txt)
             if(self.error)
-                logOutput = [datestr(now,'HH:MM:SS'),' ERROR: ',txt];
-                disp(logOutput);
-                self.Log2File(self.fileLoggerObj.ERROR, logOutput);
+                logOutput = [datestr(now,'HH:MM:SS'),' ERROR: ',txt];       % Create ERROR message
+                disp(logOutput);                                            % Display to command window
+                self.Log2File(self.fileLoggerObj.ERROR, logOutput);         % log4matlab Log to File
             end
         end
         function LogFatal(self,txt)
             if(self.fatal)
-                logOutput = [datestr(now,'HH:MM:SS'),' FATAL: ',txt];
-                disp(logOutput);
-                self.Log2File(self.fileLoggerObj.ERROR, logOutput);
+                logOutput = [datestr(now,'HH:MM:SS'),' FATAL: ',txt];       % Create FATAL message
+                disp(logOutput);                                            % Display to command window
+                self.Log2File(self.fileLoggerObj.ERROR, logOutput);         % log4matlab Log to File
             end
         end
         function Log2File(self, level, txt)
             if(self.log2File)
-                self.fileLoggerObj.mlog = {level,'',txt};
+                self.fileLoggerObj.mlog = {level,'',txt};                   % Log to File
             end
         end
     end
