@@ -19,6 +19,7 @@ classdef Log < handle
         % Constructor
         function self = Log()
             LogInfo(self,'[LOG] Log constructor');
+            self.fileLoggerObj = log4matlab('DomBot.log');                  %log4matlab object
             % Default all logging off
             self.debug = false;
             self.info = false;
