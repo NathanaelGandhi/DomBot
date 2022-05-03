@@ -86,7 +86,7 @@ classdef Simulation < handle
             end
 
             % MyCobot Object
-            MyCobotPose = {transl(1, 1, 1)};                            % MyCobot Pose
+            MyCobotPose = {transl(-1, -1, 1)};                            % MyCobot Pose
             for i = 1:numel(MyCobotPose)
                 self.AddEnvironmentObject(MyCobot(self.logObj, i, MyCobotPose{i}));             % Spawn single object
             end
