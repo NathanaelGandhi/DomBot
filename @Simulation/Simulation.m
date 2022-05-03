@@ -104,7 +104,6 @@ classdef Simulation < handle
             end
             
             % Domino Objects
-            dominoZOffset = 0.025;   %meters offset as centrepoint is standard pose
             robotReach = 0.28;       %280 mm range of motion from MyCobot manual
             for i = 1:self.dominosTotal
                 randX = rand();
@@ -117,7 +116,7 @@ classdef Simulation < handle
                 while(randY>robotReach)
                     randY = rand();
                 end
-                DominoPose = transl(0+rand(), 0+rand(), 1+dominoZOffset);               % Domino Poses
+                DominoPose = transl(0+rand(), 0+rand(), 1);               % Domino Poses
                 self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));                  % Spawn single object 
             end
         end
