@@ -67,6 +67,11 @@ classdef MyCobot < EnvironmentObject
                 (self.pose(14)+workspaceOffset(3)) (self.pose(14)+workspaceOffset(4)) ...   % y-axis
                 (self.pose(15)+workspaceOffset(5)) (self.pose(15)+workspaceOffset(6))];     % z-axis
         end
+        
+        %% To make the robot retreat from a simulated safety symbol using visual servoing and RMRC
+        function robotRetreat(self)
+            
+        end
 
         %% PlotAndColourRobot
         function PlotAndColourRobot(self)
