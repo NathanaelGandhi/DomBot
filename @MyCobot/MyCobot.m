@@ -81,6 +81,7 @@ classdef MyCobot < EnvironmentObject
             
             % Display robot
             self.logObj.LogDebug('[MyCobot] Display robot');
+            self.model.base = self.pose;
             self.model.plot3d(self.q1,'noarrow','workspace',self.workspace);
             hold on
             if isempty(findobj(get(gca,'Children'),'Type','Light'))
