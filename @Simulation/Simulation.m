@@ -116,7 +116,10 @@ classdef Simulation < handle
                 while(randY>robotReach)
                     randY = rand();
                 end
-                DominoPose = transl(0+rand(), 0+rand(), 1);               % Domino Poses
+                DominoPose = transl(...
+                    self.envObjList{self.MYCOBOT}{1}.pose(13)+randX, ...
+                    self.envObjList{self.MYCOBOT}{1}.pose(14)+randY, ...
+                    self.envObjList{self.MYCOBOT}{1}.pose(15));               % Domino Poses
                 self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));                  % Spawn single object 
             end
         end
