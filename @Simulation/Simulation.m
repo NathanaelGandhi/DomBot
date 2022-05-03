@@ -36,7 +36,7 @@ classdef Simulation < handle
             self.logObj.LogInfo('[SIM] Simulation deconstructor');
         end
         
-        % Function to Generate walls & floor surfaces
+        %% Function to Generate walls & floor surfaces
         function GenerateEnvironment(self)
             self.logObj.LogDebug('[SIM] GenerateEnvironment()');
             % Generate Environment
@@ -51,7 +51,7 @@ classdef Simulation < handle
             surf([-4,4;-4,4],[-4,-4;-4,-4],[3,3;0,0],'CData',imread('assets/BackWall.jpg'),'FaceColor','texturemap');
         end
         
-        % Function to add environment objects to the object list
+        %% Function to add environment objects to the object list
         function AddEnvironmentObject(self, envObj)
            switch envObj.type
                case 'table'
@@ -75,7 +75,7 @@ classdef Simulation < handle
            end
         end
         
-        % Function to Spawn environment objects
+        %% Function to Spawn environment objects
         function SpawnEnvironmentObjects(self)
             self.logObj.LogDebug('[SIM] SpawnEnvironmentObjects()');
             
@@ -86,7 +86,7 @@ classdef Simulation < handle
             end
 
             % MyCobot Object
-            MyCobotPose = {transl(1, 1, 1)};                            % MyCobot Pose
+            MyCobotPose = {transl(-1, -1, 1)};                            % MyCobot Pose
             for i = 1:numel(MyCobotPose)
                 self.AddEnvironmentObject(MyCobot(self.logObj, i, MyCobotPose{i}));             % Spawn single object
             end
@@ -122,12 +122,12 @@ classdef Simulation < handle
             end
         end
         
-        % Function to set the simulation running flag
+        %% Function to set the simulation running flag
         function SetSimRunningFlag(self, flag)
             self.simRunning = flag;
         end
         
-        % Function to run simulation "main" loop
+        %% Function to run simulation "main" loop
         function RunSim(self)
             while (self.simRunning)
                % Sim running. Loop while flag condition is true 
