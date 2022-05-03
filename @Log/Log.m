@@ -47,6 +47,9 @@ classdef Log < handle
         function SetFatalFlag(self,flag)
             self.fatal = flag;
         end
+        function SetLog2FileFlag(self,flag)
+            self.log2File = flag;
+        end
         
         % Print Log
         function LogDebug(self,txt)
