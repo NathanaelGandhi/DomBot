@@ -18,7 +18,7 @@ classdef EnvironmentObject
             end
             self.id = id;           % Store Id param
             self.pose = pose;       % Store Pose param
-            self.logObj.LogDebug(['[TBL] Environment Object constructor: ',self.type,':',num2str(self.id)]);
+            self.logObj.LogInfo(['[TBL] Environment Object constructor: ',self.type,':',num2str(self.id)]);
         end
     end
 end
