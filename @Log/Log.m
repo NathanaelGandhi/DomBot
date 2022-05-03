@@ -7,6 +7,7 @@ classdef Log < handle
         warn;        % Flag for Log Warn
         error;       % Flag for Log Error
         fatal;       % Flag for Log Fatal
+        log2File;    % Flag for Log to File
     end
     % Const Vars
     properties(Constant)
