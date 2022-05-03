@@ -18,6 +18,13 @@ classdef Log < handle
         % Constructor
         function self = Log()
             LogInfo(self,'[LOG] Log constructor');
+            % Default all logging off
+            self.debug = false;
+            self.info = false;
+            self.warn = false;
+            self.error = false;
+            self.fatal = false;
+            self.log2File = false;
         end
         %Deconstructor
         function delete(self)
