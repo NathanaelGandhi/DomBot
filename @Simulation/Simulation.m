@@ -106,15 +106,15 @@ classdef Simulation < handle
             % Domino Objects
             robotReach = 0.28;       %280 mm range of motion from MyCobot manual
             for i = 1:self.dominosTotal
-                randX = rand();
-                randY = rand();
+                randX = -1 + (1--1).*rand();                                % Generate random number between -1 and 1
+                randY = -1 + (1--1).*rand();                                % Used as scaling based on next check
                 % This is crap, in theory could loop forever & doesnt check
                 % it collides with something existing
-                while(randX>robotReach)
-                    randX = rand();
+                while(randX>robotReach || randX<-robotReach)
+                    randX = -1 + (1--1).*rand();
                 end
-                while(randY>robotReach)
-                    randY = rand();
+                while(randY>robotReach || randY<-robotReach)
+                    randY = -1 + (1--1).*rand();
                 end
                 DominoPose = transl(...
                     self.envObjList{self.MYCOBOT}{1}.pose(13)+randX, ...
