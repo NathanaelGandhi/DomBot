@@ -8,6 +8,7 @@ classdef Log < handle
         error;       % Flag for Log Error
         fatal;       % Flag for Log Fatal
         log2File;    % Flag for Log to File
+        fileLoggerObj; % log4matlab - Gavin (2022). log4matlab (https://www.mathworks.com/matlabcentral/fileexchange/33532-log4matlab), MATLAB Central File Exchange. Retrieved May 3, 2022.
     end
     % Const Vars
     properties(Constant)
@@ -80,6 +81,11 @@ classdef Log < handle
             if(self.fatal)
                 logOutput = [datestr(now,'HH:MM:SS'),' FATAL: ',txt];
                 disp(logOutput);
+            end
+        end
+        function Log2File(self, level, txt)
+            if(self.log2File)
+                self.fileLoggerObj.mlog = {level,'',txt};
             end
         end
     end
