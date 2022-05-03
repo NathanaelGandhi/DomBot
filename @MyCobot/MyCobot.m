@@ -71,15 +71,16 @@ classdef MyCobot < EnvironmentObject
 
         %% PlotAndColourRobot
         function PlotAndColourRobot(self)
+            % Generate face, vertex and ply data for all links
+            self.logObj.LogDebug('[MyCobot] Generate face, vertex and ply data for all links');
             for linkIndex = 0:self.model.n
-                
                 [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['MyCobot_Links/MyCobotLink',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>
-                
                 self.model.faces{linkIndex+1} = faceData;
                 self.model.points{linkIndex+1} = vertexData;
             end
             
             % Display robot
+            self.logObj.LogDebug('[MyCobot] Display robot');
             self.model.plot3d(self.q1,'noarrow','workspace',self.workspace);
             hold on
             if isempty(findobj(get(gca,'Children'),'Type','Light'))
@@ -88,6 +89,7 @@ classdef MyCobot < EnvironmentObject
             self.model.delay = 0;
             
             % Try to correctly colour the arm (if colours are in ply file data)
+            self.logObj.LogDebug('[MyCobot] Try to colour the robot');
             for linkIndex = 0:self.model.n
                 handles = findobj('Tag', self.model.name);
                 h = get(handles,'UserData');
