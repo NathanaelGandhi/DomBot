@@ -59,11 +59,7 @@ classdef MyCobot < EnvironmentObject
             self.PlotAndColourRobot();                      % robot,workspace);
         end
         
-<<<<<<< HEAD
         %% Set the workspace to the robot pose + MyCobot offsets
-=======
-        % Set the workspace to the robot pose + MyCobot offsets
->>>>>>> aace24fa4f9ac41a19a98258ebdec964d197694b
         function workspace = SetMyCobotWorkspace(self)
             workspaceOffset = [-0.5 0.5 -0.5 0.5 0 1];      % Where did these offsets come from?
             % below could be done better with loops
