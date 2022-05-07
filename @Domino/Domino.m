@@ -3,7 +3,7 @@ classdef Domino < EnvironmentObject
         model;  % Handle
         % Final pose
         desiredPose;
-        
+        dominoZOffset = 0.025;   %meters offset as centrepoint is standard pose
         % Domino vertex count
         vertexCount;
         
@@ -23,7 +23,10 @@ classdef Domino < EnvironmentObject
             % Scale the colours to be 0-to-1 (they are originally 0-to-255
             vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
             % Setting base pose
+            % Domino pose references midpoint. Apply offset to generate
+            % domino "standing" on its end
             self.pose = pose;
+            self.pose(15) = self.pose(15) + self.dominoZOffset;
             updatedPoints = [self.pose * [verts,ones(self.vertexCount,1)]']';  
             % Then plot the trisurf with verticies
             self.model = trisurf(tris,updatedPoints(:,1), updatedPoints(:,2), updatedPoints(:,3) ...
