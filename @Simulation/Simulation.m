@@ -5,6 +5,8 @@ classdef Simulation < handle
         simRunning;     % Flag for simulation desired state
         envObjList;
         dominosTotal;
+        simEStop;       % Flag for simulation E-Stop
+        simMoveEnabled; % Flag for simulation movement enabled
     end
     % Const Vars
     properties(Constant)
