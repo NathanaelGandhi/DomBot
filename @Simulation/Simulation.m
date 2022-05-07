@@ -5,6 +5,7 @@ classdef Simulation < handle
         simRunning;     % Flag for simulation desired state
         envObjList;
         dominosTotal;
+        simEStop;       % Flag for simulation E-Stop
     end
     % Const Vars
     properties(Constant)
@@ -127,6 +128,11 @@ classdef Simulation < handle
         %% Function to set the simulation running flag
         function SetSimRunningFlag(self, flag)
             self.simRunning = flag;
+        end
+        
+        %% Function to set the simulation E-Stop flag
+        function SetSimEStopFlag(self, flag)
+            self.simEStop = flag;
         end
         
         %% Function to run simulation "main" loop
