@@ -6,7 +6,6 @@ classdef Simulation < handle
         envObjList;
         dominosTotal;
         simEStop;       % Flag for simulation E-Stop
-        simMoveEnabled; % Flag for simulation movement enabled
     end
     % Const Vars
     properties(Constant)
@@ -129,6 +128,11 @@ classdef Simulation < handle
         %% Function to set the simulation running flag
         function SetSimRunningFlag(self, flag)
             self.simRunning = flag;
+        end
+        
+        %% Function to set the simulation E-Stop flag
+        function SetSimEStopFlag(self, flag)
+            self.simEStop = flag;
         end
         
         %% Function to run simulation "main" loop
