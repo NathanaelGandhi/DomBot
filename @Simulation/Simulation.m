@@ -72,6 +72,9 @@ classdef Simulation < handle
                case 'domino'
                    id = numel(self.envObjList{self.DOMINO} ) + 1;
                    self.envObjList{self.DOMINO}{id} = envObj; 
+               case 'stopSign'
+                   id = numel(self.envObjList{self.STOPSIGN} ) + 1;
+                   self.envObjList{self.STOPSIGN}{id} = envObj; 
                otherwise
                    id = numel(self.envObjList{self.GENERIC} ) + 1;
                    self.envObjList{self.GENERIC}{id} = envObj; 
