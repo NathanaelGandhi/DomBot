@@ -1,4 +1,4 @@
-classdef EnvironmentObject
+classdef EnvironmentObject < handle
     properties
         logObj;     % Log object
         type;       % Environment object Type
