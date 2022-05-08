@@ -15,6 +15,7 @@ classdef Simulation < handle
         STOPBUTTON = 4;
         EXTINGUISHER = 5;
         DOMINO = 6;
+        STOPSIGN = 7;
     end
     
     methods
