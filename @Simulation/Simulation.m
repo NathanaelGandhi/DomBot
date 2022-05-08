@@ -110,7 +110,7 @@ classdef Simulation < handle
             end
             
             % Stop Sign Objects
-            stopSignPose = {transl(1,1,1)};                                                     % Stop Sign Poses
+            stopSignPose = {transl(0.5,0.5,1) * trotx(pi/2)};                                                     % Stop Sign Poses
             for i = 1:numel(stopSignPose)
                 self.AddEnvironmentObject(StopSign(self.logObj, i, stopSignPose{i}));           % Spawn single object 
             end
