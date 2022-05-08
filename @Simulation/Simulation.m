@@ -109,6 +109,12 @@ classdef Simulation < handle
                 self.AddEnvironmentObject(Extinguisher(self.logObj, i, ExtinguisherPose{i}));   % Spawn single object 
             end
             
+            % Stop Sign Objects
+            stopSignPose = {transl(1.2,2.2,0)};                                                 % Stop Sign Poses
+            for i = 1:numel(stopSignPose)
+                self.AddEnvironmentObject(StopSign(self.logObj, i, stopSignPose{i}));           % Spawn single object 
+            end
+            
             % Domino Objects
             robotReach = 0.28;       %280 mm range of motion from MyCobot manual
             for i = 1:self.dominosTotal
