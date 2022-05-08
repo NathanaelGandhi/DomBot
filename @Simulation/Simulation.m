@@ -92,25 +92,25 @@ classdef Simulation < handle
             end
 
             % MyCobot Object
-            MyCobotPose = {transl(-1, -1, 1)};                            % MyCobot Pose
-            for i = 1:numel(MyCobotPose)
-                self.AddEnvironmentObject(MyCobot(self.logObj, i, MyCobotPose{i}));             % Spawn single object
+            myCobotPose = {transl(-1, -1, 1)};                                                  % MyCobot Pose
+            for i = 1:numel(myCobotPose)
+                self.AddEnvironmentObject(MyCobot(self.logObj, i, myCobotPose{i}));             % Spawn single object
             end
             
             % StopButton Objects
-            StopButtonPose = {transl(1.2,1.8,1),transl(-1.2,1.8,1)};                            % StopButton Poses
-            for i = 1:numel(StopButtonPose)
-                self.AddEnvironmentObject(StopButton(self.logObj, i, StopButtonPose{i}));       % Spawn single object 
+            stopButtonPose = {transl(1.2,1.8,1),transl(-1.2,1.8,1)};                            % StopButton Poses
+            for i = 1:numel(stopButtonPose)
+                self.AddEnvironmentObject(StopButton(self.logObj, i, stopButtonPose{i}));       % Spawn single object 
             end
                         
             % Extinguisher Objects
-            ExtinguisherPose = {transl(1.2,2.2,0),transl(-1.2,2.2,0)};                          % Extinguisher Poses
-            for i = 1:numel(ExtinguisherPose)
-                self.AddEnvironmentObject(Extinguisher(self.logObj, i, ExtinguisherPose{i}));   % Spawn single object 
+            extinguisherPose = {transl(1.2,2.2,0),transl(-1.2,2.2,0)};                          % Extinguisher Poses
+            for i = 1:numel(extinguisherPose)
+                self.AddEnvironmentObject(Extinguisher(self.logObj, i, extinguisherPose{i}));   % Spawn single object 
             end
             
             % Stop Sign Objects
-            stopSignPose = {transl(1.2,2.2,0)};                                                 % Stop Sign Poses
+            stopSignPose = {transl(1,1,1)};                                                     % Stop Sign Poses
             for i = 1:numel(stopSignPose)
                 self.AddEnvironmentObject(StopSign(self.logObj, i, stopSignPose{i}));           % Spawn single object 
             end
