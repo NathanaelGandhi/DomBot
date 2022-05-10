@@ -16,6 +16,8 @@ classdef Simulation < handle
         EXTINGUISHER = 5;
         DOMINO = 6;
         STOPSIGN = 7;
+        ROBOTREACH = 0.28;       %280 mm range of motion from MyCobot manual
+        ROBOTBASERADIUS = 0.05;  % Exclusion radius for robot base
     end
     
     methods
@@ -116,24 +118,54 @@ classdef Simulation < handle
             end
             
             % Domino Objects
-            robotReach = 0.28;       %280 mm range of motion from MyCobot manual
             for i = 1:self.dominosTotal
-                randX = -1 + (1--1).*rand();                                % Generate random number between -1 and 1
-                randY = -1 + (1--1).*rand();                                % Used as scaling based on next check
-                % This is crap, in theory could loop forever & doesnt check
-                % it collides with something existing
-                while(randX>robotReach || randX<-robotReach)
-                    randX = -1 + (1--1).*rand();
-                end
-                while(randY>robotReach || randY<-robotReach)
-                    randY = -1 + (1--1).*rand();
-                end
+                %[xPose,yPose] = self.GenerateSquareDominoPose();
+                [xPose,yPose] = self.GenerateRadiusDominoPose();
+                % Generated domino pose is valid
                 DominoPose = transl(...
-                    self.envObjList{self.MYCOBOT}{1}.pose(13)+randX, ...
-                    self.envObjList{self.MYCOBOT}{1}.pose(14)+randY, ...
+                    self.envObjList{self.MYCOBOT}{1}.pose(13)+xPose, ...
+                    self.envObjList{self.MYCOBOT}{1}.pose(14)+yPose, ...
                     self.envObjList{self.MYCOBOT}{1}.pose(15));               % Domino Poses
                 self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));                  % Spawn single object 
             end
+        end
+        
+        %% Function to generate domino pose using radius exclusion zones
+        function [xPose, yPose] = GenerateSquareDominoPose(self)
+            randX = -1 + (1--1).*rand();                                % Generate random number between -1 and 1
+            randY = -1 + (1--1).*rand();                                % Used as scaling based on next check
+            % This is crap, in theory could loop forever & doesnt check
+            % it collides with something existing
+            % Check if the domino is within reach of the robot
+            % Check if the domino is not within the robot base
+            % Using a square exclusion zone
+            while(randX>self.ROBOTREACH || randX<-self.ROBOTREACH || randX<self.ROBOTBASERADIUS && randX>-self.ROBOTBASERADIUS)
+                randX = -1 + (1--1).*rand();
+            end
+            while(randY>self.ROBOTREACH || randY<-self.ROBOTREACH || randY<self.ROBOTBASERADIUS && randY>-self.ROBOTBASERADIUS)
+                randY = -1 + (1--1).*rand();
+            end
+            xPose = randX;
+            yPose = randY;
+        end
+        
+        %% Function to generate domino pose using radius exclusion zones
+        function [xPose, yPose] = GenerateRadiusDominoPose(self)
+            randX = -1 + (1--1).*rand();                                % Generate random number between -1 and 1
+            randY = -1 + (1--1).*rand();                                % Used as scaling based on next check
+            testPose = sqrt((randX^2) + (randY^2));
+            % This is crap, in theory could loop forever & doesnt check
+            % it collides with something existing
+            % Check if the domino is within reach of the robot
+            % Check if the domino is not within the robot base
+            % Using radius exclusion zone
+            while(testPose>self.ROBOTREACH || testPose<-self.ROBOTREACH || testPose<self.ROBOTBASERADIUS && testPose>-self.ROBOTBASERADIUS)
+                randX = -1 + (1--1).*rand();
+                randY = -1 + (1--1).*rand();
+                testPose = sqrt(randX^2 + randY^2);
+            end
+            xPose = randX;
+            yPose = randY;
         end
         
         %% Function to set the simulation running flag
