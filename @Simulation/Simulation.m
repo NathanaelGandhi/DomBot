@@ -190,5 +190,9 @@ classdef Simulation < handle
              self.logObj.LogInfo('[SIM] Simulation Stopped');
         end
         
+        %% Function to start "teach"
+        function StartTeach(self)
+            self.envObjList{3}{1}.StartTeach();
+        end
     end
 end
