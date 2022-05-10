@@ -15,6 +15,7 @@ classdef Simulation < handle
         STOPBUTTON = 4;
         EXTINGUISHER = 5;
         DOMINO = 6;
+        STOPSIGN = 7;
     end
     
     methods
@@ -29,7 +30,8 @@ classdef Simulation < handle
             stopButtonList = {};
             extinguisherList = {};
             dominoList = {};
-            self.envObjList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList}
+            stopSignList = {};
+            self.envObjList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList}
         end
         
         %Deconstructor
@@ -70,6 +72,9 @@ classdef Simulation < handle
                case 'domino'
                    id = numel(self.envObjList{self.DOMINO} ) + 1;
                    self.envObjList{self.DOMINO}{id} = envObj; 
+               case 'stopSign'
+                   id = numel(self.envObjList{self.STOPSIGN} ) + 1;
+                   self.envObjList{self.STOPSIGN}{id} = envObj; 
                otherwise
                    id = numel(self.envObjList{self.GENERIC} ) + 1;
                    self.envObjList{self.GENERIC}{id} = envObj; 
@@ -87,21 +92,27 @@ classdef Simulation < handle
             end
 
             % MyCobot Object
-            MyCobotPose = {transl(-1, -1, 1)};                            % MyCobot Pose
-            for i = 1:numel(MyCobotPose)
-                self.AddEnvironmentObject(MyCobot(self.logObj, i, MyCobotPose{i}));             % Spawn single object
+            myCobotPose = {transl(0, 0, 1)};                                                  % MyCobot Pose
+            for i = 1:numel(myCobotPose)
+                self.AddEnvironmentObject(MyCobot(self.logObj, i, myCobotPose{i}));             % Spawn single object
             end
             
             % StopButton Objects
-            StopButtonPose = {transl(1.2,1.8,1),transl(-1.2,1.8,1)};                            % StopButton Poses
-            for i = 1:numel(StopButtonPose)
-                self.AddEnvironmentObject(StopButton(self.logObj, i, StopButtonPose{i}));       % Spawn single object 
+            stopButtonPose = {transl(1.2,1.8,1),transl(-1.2,1.8,1)};                            % StopButton Poses
+            for i = 1:numel(stopButtonPose)
+                self.AddEnvironmentObject(StopButton(self.logObj, i, stopButtonPose{i}));       % Spawn single object 
             end
                         
             % Extinguisher Objects
-            ExtinguisherPose = {transl(1.2,2.2,0),transl(-1.2,2.2,0)};                          % Extinguisher Poses
-            for i = 1:numel(ExtinguisherPose)
-                self.AddEnvironmentObject(Extinguisher(self.logObj, i, ExtinguisherPose{i}));   % Spawn single object 
+            extinguisherPose = {transl(1.2,2.2,0),transl(-1.2,2.2,0)};                          % Extinguisher Poses
+            for i = 1:numel(extinguisherPose)
+                self.AddEnvironmentObject(Extinguisher(self.logObj, i, extinguisherPose{i}));   % Spawn single object 
+            end
+            
+            % Stop Sign Objects
+            stopSignPose = {transl(0.5,0.5,1) * trotx(pi/2)};                                                     % Stop Sign Poses
+            for i = 1:numel(stopSignPose)
+                self.AddEnvironmentObject(StopSign(self.logObj, i, stopSignPose{i}));           % Spawn single object 
             end
             
             % Domino Objects
