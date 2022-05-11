@@ -458,6 +458,14 @@ function teach(myCobot, varargin)
     end
 end
 
+function teach3_callback(src, name, j, handles)
+
+end
+
+function teach2_callback(src, name, j, handles)
+
+end
+
 function teach_callback(src, name, j, handles)
     
     % called on changes to a slider or to the edit box showing joint coordinate
