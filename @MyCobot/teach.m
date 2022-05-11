@@ -133,7 +133,7 @@ function teach(myCobot, varargin)
     % shrink the current axes to make room
     %   [l b w h]
     %set(ax, 'OuterPosition', [0.25 0 0.70 1])  % Limit for 1 panel
-    set(ax, 'OuterPosition', [0.25 0 0.50 1])   % Limit for 2 panels
+    set(ax, 'OuterPosition', [0.50 0 0.50 1])   % Limit for 2 panels
     
     handles.curax = ax;
     
@@ -144,19 +144,26 @@ function teach(myCobot, varargin)
         'Position', [0 0 .25 1]);
     set(panel, 'Units', 'pixels'); % stop automatic resizing
     handles.panel = panel;
-    set(handles.fig, 'Units', 'pixels');
-    set(handles.fig, 'ResizeFcn', @(src,event) resize_callback(robot, handles));
-    
-    % Create panel2    
+        
+    % Create panel2 - cartesian control
     panel2 = uipanel(handles.fig, ...
         'Title', 'Teach Cartesian', ...
         'BackGroundColor', bgcol,...
-        'Position', [0.75 0 2 1]);
+        'Position', [.25 0 .25 0.5]);
     set(panel2, 'Units', 'pixels'); % stop automatic resizing
     handles.panel2 = panel2;
+    
+    % Create panel3 - object move    
+    panel3 = uipanel(handles.fig, ...
+        'Title', 'Teach Object', ...
+        'BackGroundColor', bgcol,...
+        'Position', [.25 0.5 .25 1]);
+    set(panel3, 'Units', 'pixels'); % stop automatic resizing
+    handles.panel3 = panel3;
+    
+    % Set the panels
     set(handles.fig, 'Units', 'pixels');
     set(handles.fig, 'ResizeFcn', @(src,event) resize_callback(robot, handles));
-
     
     %---- get the current robot state
     
@@ -500,18 +507,24 @@ end
 function quit_callback(robot, handles)
     set(handles.fig, 'ResizeFcn', '');
     delete(handles.panel);
+    delete(handles.panel2);     % Delete the second panel
     set(handles.curax, 'Units', 'Normalized', 'OuterPosition', [0 0 1 1])
 end
 
 function resize_callback(robot, handles)
-
     % come here on figure resize events
-    fig = gcbo;   % this figure (whose callback is executing)
-    fs = get(fig, 'Position');  % get size of figure
-    ps = get(handles.panel, 'Position');  % get position of the panel
+    fig = gcbo;                             % this figure (whose callback is executing)
+    fs = get(fig, 'Position');              % get size of figure
+    ps = get(handles.panel, 'Position');    % get position of the panel
+    ps2 = get(handles.panel2, 'Position');  % get position of the panel2
+    ps3 = get(handles.panel3, 'Position');  % get position of the panel3
     % update dimensions of the axis area
     set(handles.curax, 'Units', 'pixels', ...
         'OuterPosition', [ps(3) 0 fs(3)-ps(3) fs(4)]);
     % keep the panel anchored to the top left corner
-    set(handles.panel, 'Position', [1 fs(4)-ps(4) ps(3:4)]);
+    set(handles.panel, 'Position', [1 fs(4)-ps(4) ps(3:4)]);        % Postition is [left bottom width height]
+    % keep the panel2 anchored to the top right corner of panel
+    set(handles.panel2, 'Position', [ps(3) fs(4)-ps(4) ps3(3) ps(4)/2]);
+    % keep the panel3 anchored to the mid right corner of panel
+    set(handles.panel3, 'Position', [ps(3) fs(4)-(ps(4)/2) ps2(3) ps(4)/2]);
 end
