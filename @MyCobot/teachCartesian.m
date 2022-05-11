@@ -6,8 +6,76 @@ function teachCartesian(robot)
     height = 0.06;  % height of slider rows
     %-------------------------------
     handles = InstallThePanel(robot,bgcol);
-    
+    handles = SetQlimToFinite(robot,handles);
+    handles = GetCurrentRobotState(robot,handles);
+    MakeSliders(robot,handles,bgcol,height);
+end
 
+function MakeSliders(robot,handles,bgcol,height)
+    %---- now make the sliders
+    sliderLabels = ['x','y','z'];
+    n = size(sliderLabels,2);      % xyz
+    for j=1:n
+        % slider label
+        uicontrol(handles.panel, 'Style', 'text', ...
+            'Units', 'normalized', ...
+            'BackgroundColor', bgcol, ...
+            'Position', [0 height*(n-j+2) 0.15 height], ...
+            'FontUnits', 'normalized', ...
+            'FontSize', 0.5, ...
+            'String', sprintf(sliderLabels(:,j)));
+        
+%         % slider itself
+%         handles.q(j) = max( handles.qlim(j,1), min( handles.qlim(j,2), q(j) ) ); % clip to range
+%         handles.slider(j) = uicontrol(panel, 'Style', 'slider', ...
+%             'Units', 'normalized', ...
+%             'Position', [0.15 height*(n-j+2) 0.65 height], ...
+%             'Min', handles.qlim(j,1), ...
+%             'Max', handles.qlim(j,2), ...
+%             'Value', handles.q(j), ...
+%             'Tag', sprintf('Slider%d', j));
+%         
+%         % text box showing slider value, also editable
+%         handles.edit(j) = uicontrol(panel, 'Style', 'edit', ...
+%             'Units', 'normalized', ...
+%             'Position', [0.80 height*(n-j+2)+.01 0.20 0.9*height], ...
+%             'BackgroundColor', bgcol, ...
+%             'String', num2str(qscale(j)*q(j), 3), ...
+%             'HorizontalAlignment', 'left', ...
+%             'FontUnits', 'normalized', ...
+%             'FontSize', 0.4, ...
+%             'Tag', sprintf('Edit%d', j));
+    end
+end
+
+function handles = GetCurrentRobotState(robot, handles)
+    %---- get the current robot state
+    if isempty(handles.q)
+        % check to see if there are any graphical robots of this name
+        rhandles = findobj('Tag', robot.model.name);
+        % find the graphical element of this name
+        if isempty(rhandles)
+            error('RTB:teach:badarg', 'No graphical robot of this name found');
+        end
+        % get the info from its Userdata
+        info = get(rhandles(1), 'UserData');
+        % the handle contains current joint angles (set by plot)
+        if ~isempty(info.q)
+            handles.q = info.q;
+        end
+    else
+    robot.model.plot(handles.q);
+    end
+    handles.T6 = robot.model.fkine(handles.q);
+end
+
+function handles = SetQlimToFinite(robot,handles)
+    % we need to have qlim set to finite values for a prismatic joint
+    qlim = robot.model.qlim;
+    if any(isinf(qlim))
+        error('RTB:teach:badarg', 'Must define joint coordinate limits for prismatic axes, set qlim properties for prismatic Links');
+    end
+    handles.q = [];
 end
 
 function handles = InstallThePanel(robot,bgcol)
@@ -38,7 +106,7 @@ function handles = InstallThePanel(robot,bgcol)
     
     % create the panel itself
     panel = uipanel(handles.fig, ...
-        'Title', 'Teach', ...
+        'Title', 'Teach Cartesian', ...
         'BackGroundColor', bgcol,...
         'Position', [0 0 .25 1]);
     set(panel, 'Units', 'pixels'); % stop automatic resizing
