@@ -190,9 +190,19 @@ classdef Simulation < handle
              self.logObj.LogInfo('[SIM] Simulation Stopped');
         end
         
-        %% Function to start "teach"
+        %% Function to start "teach classic"
         function StartClassicTeach(self)
             self.envObjList{3}{1}.StartClassicTeach();
+        end
+        
+        %% Function to start "teach cartesian"
+        function StartCartesianTeach(self)
+            self.envObjList{3}{1}.StartCartesianTeach();
+        end
+        
+        %% Function to start "teach object"
+        function StartObjectTeach(self)
+            self.envObjList{3}{1}.StartObjectTeach();
         end
     end
 end

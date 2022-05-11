@@ -210,9 +210,20 @@ classdef MyCobot < EnvironmentObject
             drawnow;
         end
         
-        %% Function to start "teach"
+        %% Function to start "teach classic"
         function StartClassicTeach(self)
             self.teach();
         end
+        
+        %% Function to start "teach cartesian"
+        function StartCartesianTeach(self)
+            self.teachCartesian();
+        end
+        
+        %% Function to start "teach object"
+        function StartObjectTeach(self)
+            self.teachObject();
+        end
+        
     end
 end
