@@ -520,7 +520,7 @@ function resize_callback(robot, handles)
     ps3 = get(handles.panel3, 'Position');  % get position of the panel3
     % update dimensions of the axis area
     set(handles.curax, 'Units', 'pixels', ...
-        'OuterPosition', [ps(3) 0 fs(3)-ps(3) fs(4)]);
+        'OuterPosition', [ps(3)*2 0 fs(3)-(ps(3)*2) fs(4)]);
     % keep the panel anchored to the top left corner
     set(handles.panel, 'Position', [1 fs(4)-ps(4) ps(3:4)]);        % Postition is [left bottom width height]
     % keep the panel2 anchored to the top right corner of panel
