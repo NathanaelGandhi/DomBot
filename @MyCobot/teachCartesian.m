@@ -11,9 +11,9 @@ function teachCartesian(robot)
         -handles.robot.radiusOfMotion, handles.robot.radiusOfMotion; ...
         -handles.robot.radiusOfMotion, handles.robot.radiusOfMotion; ...
         handles.robot.pose(3,4), handles.robot.pose(3,4)+0.412; ...         %0.411 appears to be max simulated reach
-        0, 360; ...     & Degrees
-        0, 360; ...
-        0, 360]; 
+        -0.1, 360.1; ...     & Degrees with +/-0.1 for overshoot
+        -0.1, 360.1; ...
+        -0.1, 360.1]; 
     %-------------------------------
     handles = InstallThePanel(handles);
     handles = SetQlimToFinite(handles);
@@ -23,6 +23,7 @@ function teachCartesian(robot)
     handles = AssignCallbacks(handles);
 end
 
+%% ---- VALUES ARE NOT BEING PASSED BACK FROM CALLBACK - THIS HAS UNINTENDED RESULTS WHEN JOGGING MULTIPLE AXES
 function teach_callback(src, name, j, handles)
     % called on changes to a slider or to the edit box showing joint coordinate
     % src      = the object that caused the event
@@ -40,26 +41,89 @@ function teach_callback(src, name, j, handles)
             newval = str2double(get(src, 'String'));
             set(handles.slider(j), 'Value', newval);
     end
+    
+    % Assign the relevant joint with the updated value
+    switch(j)
+            case {1,2,3}
+                modifier=j;
+                sliderType = 4;
+            case 4
+                modifier=1;
+                sliderType = 3;
+            case 5
+                modifier=2;
+                sliderType = 3;
+            case 6
+                modifier=3;
+                sliderType = 3;
+    end
+    handles.T6(modifier,sliderType) = newval;
 
-%     % find all graphical objects tagged with the robot name, this is the
-%     % instancs of that robot across all figures
-%     h = findobj('Tag', name);
-%     
-%     
-%     % find the graphical element of this name
-%     if isempty(h)
-%         error('RTB:teach:badarg', 'No graphical robot of this name found');
-%     end
-%     % get the info from its Userdata
-%     info = get(h(1), 'UserData');
-%     
-%     % update the stored joint coordinates
-%     info.q(j) = newval;
-%     % and save it back to the graphical object
-%     set(h(1), 'UserData', info);
+    % find all graphical objects tagged with the robot name, this is the
+    % instancs of that robot across all figures
+    h = findobj('Tag', name);
+    % find the graphical element of this name
+    if isempty(h)
+        error('RTB:teach:badarg', 'No graphical robot of this name found');
+    end
+    % get the info from its Userdata
+    info = get(h(1), 'UserData');
+    
+    % Generate new transform
+    transform = transl(handles.T6(1,4),handles.T6(2,4),handles.T6(3,4)) ...
+        * trotx(deg2rad(handles.T6(1,3))) ...
+        * troty(deg2rad(handles.T6(2,3))) ...
+        * trotz(deg2rad(handles.T6(3,3)));
+    
+    % Compute joint angles for new pose
+    CalculateTraj(handles.robot, transform, 1)      % self, Transform, steps
+    
+    % Move the robot 1 step
+    RunTraj(handles.robot, 1)                       % self, increment
+    
+    % update the stored joint coordinates
+    info.q = handles.robot.qCurrent;
+
+    % and save it back to the graphical object
+    set(h(1), 'UserData', info);
+    
+    % Update all sliders and edit boxes
+    % recompute the robot tool pose
+    handles.T6 = handles.robot.model.fkine(info.q);
+    
+    n = size(handles.sliderLabels,2);
+    for k=1:n
+        switch(k)
+            case {1,2,3}
+                modifier=k;
+                sliderType = 4;
+            case 4
+                modifier=1;
+                sliderType = 3;
+            case 5
+                modifier=2;
+                sliderType = 3;
+            case 6
+                modifier=3;
+                sliderType = 3;
+        end
+        if(k==j)
+            % We have already updated this, dont do anything
+        else
+            % Update all other sliders
+            % reflect it to edit box
+            set(handles.edit(k), 'String', num2str(handles.T6(modifier,sliderType), 3));
+            % reflect it to slider
+            set(handles.slider(k), 'Value', handles.T6(modifier,sliderType));
+        end
+    end
+    
+
+
+    
 %     
 %     % update all robots of this name
-%     animate(handles.robot, info.q);
+%     handles.robot.model.animate(handles.robot, info.q);
 %     
 %     
 %     % compute the robot tool pose
