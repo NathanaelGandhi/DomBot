@@ -112,6 +112,8 @@ function teach(myCobot, varargin)
     qscale3 = 0.01; % 1cm scale
     
     handles.qscale = qscale;
+    handles.qscale2 = qscale2;
+    handles.qscale3 = qscale3;
     handles.robot = robot;
    
     
@@ -480,7 +482,16 @@ function teach(myCobot, varargin)
 end
 
 function teach3_callback(src, name, j, handles)
-
+    switch get(src, 'Style')
+        case 'slider'
+            % slider changed, get value and reflect it to edit box
+            newval = get(src, 'Value');
+            set(handles.edit3(j), 'String', num2str(handles.qscale3*newval, 3));
+        case 'edit'
+            % edit box changed, get value and reflect it to slider
+            newval = str2double(get(src, 'String')) / handles.qscale3;
+            set(handles.slider3(j), 'Value', newval);
+    end
 end
 
 function teach2_callback(src, name, j, handles)
