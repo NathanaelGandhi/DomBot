@@ -5,12 +5,12 @@ function teachCartesian(robot)
     bgcol = [103 233 98]/255;  % background color
     height = 0.06;  % height of slider rows
     %-------------------------------
-    InstallThePanel(robot,bgcol);
+    handles = InstallThePanel(robot,bgcol);
     
 
 end
 
-function InstallThePanel(robot,bgcol)
+function handles = InstallThePanel(robot,bgcol)
     %---- install the panel at the side of the figure
     % find the right figure to put it in
     c = findobj(gca, 'Tag', robot.model.name);      % check the current axes
