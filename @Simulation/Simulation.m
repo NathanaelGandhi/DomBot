@@ -192,7 +192,7 @@ classdef Simulation < handle
         
         %% Function to start "teach"
         function StartClassicTeach(self)
-            self.envObjList{3}{1}.StartTeach();
+            self.envObjList{3}{1}.StartClassicTeach();
         end
     end
 end
