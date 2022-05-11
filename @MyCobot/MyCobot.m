@@ -3,7 +3,7 @@ classdef MyCobot < EnvironmentObject
     properties
         model;  % Class object
         workspace;
-        radiusOfMotion = 0.28; %280 mm range of motion from MyCobot manual 
+        radiusOfMotion = 0.286; %280 mm range of motion from MyCobot manual 
         rangeOfMotionPlot;
         
         % Variables for calculating trajectory (RMRC)
