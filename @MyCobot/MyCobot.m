@@ -30,12 +30,12 @@ classdef MyCobot < EnvironmentObject
         function model = GetMyCobotRobot()
             pause(0.001);
             name = ['MyCobot_',datestr(now,'yyyymmddTHHMMSSFFF')];
-            L(1) = Link('d', 0.13156, 'a', 0, 'alpha', pi/2,'qlim',[deg2rad(-360),deg2rad(360)]);
-            L(2) = Link('d', -0.06639, 'a', 0.1104, 'alpha', 0,'qlim',[deg2rad(-360),deg2rad(360)]);
-            L(3) = Link('d', 0.06639, 'a', 0.096, 'alpha', 0,'qlim',[deg2rad(-360),deg2rad(360)]);
-            L(4) = Link('d', -0.06639, 'a', 0, 'alpha', -pi/2,'qlim',[deg2rad(-360),deg2rad(360)]);
-            L(5) = Link('d', 0.07318, 'a', 0, 'alpha', -pi/2,'qlim',[deg2rad(-360),deg2rad(360)]);
-            L(6) = Link('d', -0.0436, 'a', 0, 'alpha', 0,'qlim',[deg2rad(-360),deg2rad(360)]);
+            L(1) = Link('d', 0.13156, 'a', 0, 'alpha', pi/2);
+            L(2) = Link('d', -0.06639, 'a', 0.1104, 'alpha', 0);
+            L(3) = Link('d', 0.06639, 'a', 0.096, 'alpha', 0);
+            L(4) = Link('d', -0.06639, 'a', 0, 'alpha', -pi/2);
+            L(5) = Link('d', 0.07318, 'a', 0, 'alpha', -pi/2);
+            L(6) = Link('d', -0.0436, 'a', 0, 'alpha', 0);
             
             %offset
             L(2).offset = pi/2;
