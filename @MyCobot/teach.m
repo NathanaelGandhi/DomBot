@@ -495,7 +495,16 @@ function teach3_callback(src, name, j, handles)
 end
 
 function teach2_callback(src, name, j, handles)
-
+    switch get(src, 'Style')
+        case 'slider'
+            % slider changed, get value and reflect it to edit box
+            newval = get(src, 'Value');
+            set(handles.edit2(j), 'String', num2str(handles.qscale2*newval, 3));
+        case 'edit'
+            % edit box changed, get value and reflect it to slider
+            newval = str2double(get(src, 'String')) / handles.qscale2;
+            set(handles.slider2(j), 'Value', newval);
+    end
 end
 
 function teach_callback(src, name, j, handles)
