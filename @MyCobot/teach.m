@@ -61,7 +61,6 @@
 
 % a ton of handles and parameters created by this function are stashed in 
 % a structure which is passed into all callbacks 
-
 function teach(myCobot, varargin)
 
     robot = myCobot.model;
@@ -249,12 +248,12 @@ function teach(myCobot, varargin)
             'String', sprintf(axis(:,j)));
         
         % slider itself - Panel 2 Cartesian move
-        q(j) = max( myCobot.radiusOfMotion, min(-myCobot.radiusOfMotion) ); % clip to range
+        q(j) = max( myCobot.radiusOfMotion ); % clip to range
         handles.slider2(j) = uicontrol(panel2, 'Style', 'slider', ...
             'Units', 'normalized', ...
             'Position', [0.15 height*2*(numAxis-j+2) 0.65 height*2], ...
-            'Min', qlim(j,1), ...
-            'Max', qlim(j,2), ...
+            'Min', myCobot.radiusOfMotion, ...
+            'Max', -myCobot.radiusOfMotion, ...
             'Value', q(j), ...
             'Tag', sprintf('Slider%d', j));
         
@@ -463,25 +462,25 @@ function teach(myCobot, varargin)
         % text edit box - panel 2
         set(handles.edit2(j), ...
             'Interruptible', 'off', ...
-            'Callback', @(src,event)teach2_callback(src, robot.name, j, handles));
+            'Callback', @(src,event)teach2_callback(src, robot, j, handles));
         % slider - panel 2
         set(handles.slider2(j), ...
             'Interruptible', 'off', ...
             'BusyAction', 'queue', ...
-            'Callback', @(src,event)teach2_callback(src, robot.name, j, handles));
+            'Callback', @(src,event)teach2_callback(src, robot, j, handles));
         % text edit box - panel 3
         set(handles.edit3(j), ...
             'Interruptible', 'off', ...
-            'Callback', @(src,event)teach3_callback(src, robot.name, j, handles));
+            'Callback', @(src,event)teach3_callback(src, robot, j, handles));
         % slider - panel 3
         set(handles.slider3(j), ...
             'Interruptible', 'off', ...
             'BusyAction', 'queue', ...
-            'Callback', @(src,event)teach3_callback(src, robot.name, j, handles));
+            'Callback', @(src,event)teach3_callback(src, robot, j, handles));
     end
 end
 
-function teach3_callback(src, name, j, handles)
+function teach3_callback(src, robot, j, handles)
     switch get(src, 'Style')
         case 'slider'
             % slider changed, get value and reflect it to edit box
@@ -494,19 +493,67 @@ function teach3_callback(src, name, j, handles)
     end
 end
 
-function teach2_callback(src, name, j, handles)
+function teach2_callback(src, robot, j, handles)
     % compute the robot tool pose
-    T6 = handles.robot.fkine(handles.q)
+    T6 = handles.robot.fkine(handles.q);
     switch get(src, 'Style')
         case 'slider'
             % slider changed, get value and reflect it to edit box
             newval = get(src, 'Value');
-            set(handles.edit2(j), 'String', num2str((handles.qscale2*newval)+T6(j,4), 3));
+            newAxisVal = (handles.qscale2*newval)+T6(j,4);
+            set(handles.edit2(j), 'String', num2str(newAxisVal, 3));
         case 'edit'
             % edit box changed, get value and reflect it to slider
-            newval = str2double(get(src, 'String')) / handles.qscale2;
+            newAxisVal = str2double(get(src, 'String'))
+            newval = newAxisVal / handles.qscale2;
             set(handles.slider2(j), 'Value', newval);
     end
+  
+    % Compute joint angles from robot pose
+    switch (j)
+        case 1
+            % X changed compute new transform
+            Tf = transl(newAxisVal, T6(2,4), T6(3,4));
+        case 2
+            % Y changed compute new transform
+            Tf = transl(T6(1,4), newAxisVal, T6(3,4));
+        case 3
+            % Z changed compute new transform
+            Tf = transl(T6(1,4), T6(2,4), newAxisVal);
+    end
+
+    % find all graphical objects tagged with the robot name, this is the
+    % instancs of that robot across all figures
+    h = findobj('Tag', robot.name);
+    % find the graphical element of this name
+    if isempty(h)
+        error('RTB:teach:badarg', 'No graphical robot of this name found');
+    end
+    % get the info from its Userdata
+    info = get(h(1), 'UserData');
+    
+    % update the stored joint coordinates
+    info.q = handles.robot.ikcon(Tf,info.q);
+    % and save it back to the graphical object
+    set(h(1), 'UserData', info);
+    
+%     % Call teach_callback to update robot model and joint sliders
+%     set(src, 'Style', 'text');     % Arbitary unused UIControl property to indicated passed from another callback
+%     teach_callback(src, name, j, handles);
+
+    % Update panel teach 
+    updatePanel(robot, handles, h);
+end
+
+function updatePanel(robot, handles, h)
+    n = robot.n;
+    info = get(h(1), 'UserData');                               % Get current values for joints
+    for j=1:n
+        set(handles.edit(j), 'String', num2str(info.q(j), 3));  % Update edit box
+        set(handles.slider(j), 'Value', info.q(j));             % Update slider
+    end
+    % update all robots of this name
+    animate(handles.robot, info.q);
 end
 
 function teach_callback(src, name, j, handles)
@@ -519,6 +566,7 @@ function teach_callback(src, name, j, handles)
     % slider   true if the
     
     qscale = handles.qscale;
+    newValFlag = true;
     
     switch get(src, 'Style')
         case 'slider'
@@ -529,6 +577,8 @@ function teach_callback(src, name, j, handles)
             % edit box changed, get value and reflect it to slider
             newval = str2double(get(src, 'String')) / qscale(j);
             set(handles.slider(j), 'Value', newval);
+        case 'text' % When passed from other callback
+            newValFlag = false;
     end
     %fprintf('newval %d %f\n', j, newval);
     
@@ -547,11 +597,14 @@ function teach_callback(src, name, j, handles)
     % get the info from its Userdata
     info = get(h(1), 'UserData');
     
-    % update the stored joint coordinates
-    info.q(j) = newval;
-    % and save it back to the graphical object
-    set(h(1), 'UserData', info);
     
+    if(newValFlag)
+        % update the stored joint coordinates
+        info.q(j) = newval;
+        % and save it back to the graphical object
+        set(h(1), 'UserData', info);
+    end
+        
     % update all robots of this name
     animate(handles.robot, info.q);
     
@@ -594,6 +647,7 @@ function quit_callback(robot, handles)
     set(handles.fig, 'ResizeFcn', '');
     delete(handles.panel);
     delete(handles.panel2);     % Delete the second panel
+    delete(handles.panel3);     % Delete the second panel
     set(handles.curax, 'Units', 'Normalized', 'OuterPosition', [0 0 1 1])
 end
 
