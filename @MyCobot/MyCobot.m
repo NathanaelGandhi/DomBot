@@ -9,7 +9,6 @@ classdef MyCobot < EnvironmentObject
         % Variables for calculating trajectory (RMRC)
         qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
-        steps;                              
         deltaT = 0.05;                          % Discrete time step
         W = diag([1 1 1 0.1 0.1 0.1]);          % Weighting matrix for the velocity vector
         
@@ -148,25 +147,24 @@ classdef MyCobot < EnvironmentObject
         % checks if inputed transform exceeds range of motion (280 mm)
 
         % 1.2) Allocate array data
-        self.steps = steps;
-        self.qMatrix = zeros(self.steps,6);          % Array for joint angles
-        qdot = zeros(self.steps,6);             % Array for joint velocities
-        theta = zeros(3,self.steps);            % Array for roll-pitch-yaw angles
-        x = zeros(3,self.steps);                % Array for x-y-z trajectory
-        positionError = zeros(3,self.steps);    % For plotting trajectory error
-        angleError = zeros(3,self.steps);       % For plotting trajectory error
+        self.qMatrix = zeros(steps,6);          % Array for joint angles
+        qdot = zeros(steps,6);             % Array for joint velocities
+        theta = zeros(3,steps);            % Array for roll-pitch-yaw angles
+        x = zeros(3,steps);                % Array for x-y-z trajectory
+        positionError = zeros(3,steps);    % For plotting trajectory error
+        angleError = zeros(3,steps);       % For plotting trajectory error
         
         % Calculates trapizoidal trajectory of end effector position
         Ti = self.model.fkine(self.qCurrent);   % Transform of current end effector position
         Tf = Transform;                         % Transform of final end effector position
-        s = lspb(0,1,self.steps);               % Trapezoidal trajectory scalar
-        for i=1:self.steps
+        s = lspb(0,1,steps);               % Trapezoidal trajectory scalar
+        for i=1:steps
             x(:,i) = (1-s(i))*Ti(1:3, 4)+s(i)*Tf(1:3,4);
             %theta(:,i) = (1-s(i))*tr2rpy(Ti)+s(i)*tr2rpy(Tf);
             theta(:,i) = tr2rpy(trotx(0));
         end
         self.qMatrix(1,:) = self.model.ikcon(Tf,self.qCurrent);
-        for i=1:self.steps-1
+        for i=1:steps-1
             T = self.model.fkine(self.qMatrix(i,:));
             deltaX = x(:,i+1) - T(1:3, 4);      % Get position error from next waypoint
             Rd = rpy2r(theta(1,i+1),theta(2,i+1),theta(3,i+1));      % Get next RPY angles, convert to rotation matrix
