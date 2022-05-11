@@ -11,9 +11,9 @@ function teachCartesian(robot)
         -handles.robot.radiusOfMotion, handles.robot.radiusOfMotion; ...
         -handles.robot.radiusOfMotion, handles.robot.radiusOfMotion; ...
         handles.robot.pose(3,4), handles.robot.pose(3,4)+0.412; ...         %0.411 appears to be max simulated reach
-        0, 2*pi; ...
-        0, 2*pi; ...
-        0, 2*pi;]; 
+        0, 360; ...     & Degrees
+        0, 360; ...
+        0, 360]; 
     %-------------------------------
     handles = InstallThePanel(handles);
     handles = SetQlimToFinite(handles);
@@ -24,33 +24,25 @@ function teachCartesian(robot)
 end
 
 function teach_callback(src, name, j, handles)
+    % called on changes to a slider or to the edit box showing joint coordinate
+    % src      = the object that caused the event
+    % name     = name of the robot
+    % j        = the index concerned (1..N)
     
-%     % called on changes to a slider or to the edit box showing joint coordinate
-%     %
-%     % src      the object that caused the event
-%     % name     name of the robot
-%     % j        the joint index concerned (1..N)
-%     % slider   true if the
-%     
-%     qscale = handles.qscale;
-%     
-%     switch get(src, 'Style')
-%         case 'slider'
-%             % slider changed, get value and reflect it to edit box
-%             newval = get(src, 'Value');
-%             set(handles.edit(j), 'String', num2str(qscale(j)*newval, 3));
-%         case 'edit'
-%             % edit box changed, get value and reflect it to slider
-%             newval = str2double(get(src, 'String')) / qscale(j);
-%             set(handles.slider(j), 'Value', newval);
-%     end
-%     %fprintf('newval %d %f\n', j, newval);
-%     
-% 
-%     
+    % Update the slider/edit box
+    switch get(src, 'Style')
+        case 'slider'
+            % slider changed, get value and reflect it to edit box
+            newval = get(src, 'Value');
+            set(handles.edit(j), 'String', num2str(newval, 3));
+        case 'edit'
+            % edit box changed, get value and reflect it to slider
+            newval = str2double(get(src, 'String'));
+            set(handles.slider(j), 'Value', newval);
+    end
+
 %     % find all graphical objects tagged with the robot name, this is the
 %     % instancs of that robot across all figures
-%     
 %     h = findobj('Tag', name);
 %     
 %     
