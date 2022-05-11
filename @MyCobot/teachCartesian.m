@@ -22,6 +22,18 @@ function teachCartesian(robot)
     AddExitButton(handles);
 end
 
+function resize_callback(handles)
+    % come here on figure resize events
+    fig = gcbo;   % this figure (whose callback is executing)
+    fs = get(fig, 'Position');  % get size of figure
+    ps = get(handles.panel, 'Position');  % get position of the panel
+    % update dimensions of the axis area
+    set(handles.curax, 'Units', 'pixels', ...
+        'OuterPosition', [ps(3) 0 fs(3)-ps(3) fs(4)]);
+    % keep the panel anchored to the top left corner
+    set(handles.panel, 'Position', [1 fs(4)-ps(4) ps(3:4)]);
+end
+
 function quit_callback(handles)
     set(handles.fig, 'ResizeFcn', '');
     delete(handles.panel);
@@ -155,6 +167,6 @@ function handles = InstallThePanel(handles)
     set(panel, 'Units', 'pixels'); % stop automatic resizing
     handles.panel = panel;
     set(handles.fig, 'Units', 'pixels');
-    set(handles.fig, 'ResizeFcn', @(src,event) resize_callback(handles.robot.model, handles));
+    set(handles.fig, 'ResizeFcn', @(src,event) resize_callback(handles));
 end
 
