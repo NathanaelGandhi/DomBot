@@ -23,6 +23,80 @@ function teachCartesian(robot)
     handles = AssignCallbacks(handles);
 end
 
+function teach_callback(src, name, j, handles)
+    
+%     % called on changes to a slider or to the edit box showing joint coordinate
+%     %
+%     % src      the object that caused the event
+%     % name     name of the robot
+%     % j        the joint index concerned (1..N)
+%     % slider   true if the
+%     
+%     qscale = handles.qscale;
+%     
+%     switch get(src, 'Style')
+%         case 'slider'
+%             % slider changed, get value and reflect it to edit box
+%             newval = get(src, 'Value');
+%             set(handles.edit(j), 'String', num2str(qscale(j)*newval, 3));
+%         case 'edit'
+%             % edit box changed, get value and reflect it to slider
+%             newval = str2double(get(src, 'String')) / qscale(j);
+%             set(handles.slider(j), 'Value', newval);
+%     end
+%     %fprintf('newval %d %f\n', j, newval);
+%     
+% 
+%     
+%     % find all graphical objects tagged with the robot name, this is the
+%     % instancs of that robot across all figures
+%     
+%     h = findobj('Tag', name);
+%     
+%     
+%     % find the graphical element of this name
+%     if isempty(h)
+%         error('RTB:teach:badarg', 'No graphical robot of this name found');
+%     end
+%     % get the info from its Userdata
+%     info = get(h(1), 'UserData');
+%     
+%     % update the stored joint coordinates
+%     info.q(j) = newval;
+%     % and save it back to the graphical object
+%     set(h(1), 'UserData', info);
+%     
+%     % update all robots of this name
+%     animate(handles.robot, info.q);
+%     
+%     
+%     % compute the robot tool pose
+%     T6 = handles.robot.fkine(info.q);
+%     
+%     % convert orientation to desired format
+%     switch handles.orientation
+%         case 'approach'
+%             orient = T6(:,3);    % approach vector
+%         case 'eul'
+%             orient = tr2eul(T6, 'setopt', handles.opt);
+%         case'rpy'
+%             orient = tr2rpy(T6, 'setopt', handles.opt);
+%     end
+%     
+%     % update the display in the teach window
+%     for i=1:3
+%         set(handles.t6.t(i), 'String', sprintf('%.3f', T6(i,4)));
+%         set(handles.t6.r(i), 'String', sprintf('%.3f', orient(i)));
+%     end
+%     
+%     if ~isempty(handles.callback)
+%         handles.callback(handles.robot, info.q);
+%     end
+%     
+%     %notify(handles.robot, 'Moved');
+
+end
+
 function handles = AssignCallbacks(handles)
     %---- now assign the callbacks
     n = size(handles.sliderLabels,2);
