@@ -495,11 +495,13 @@ function teach3_callback(src, name, j, handles)
 end
 
 function teach2_callback(src, name, j, handles)
+    % compute the robot tool pose
+    T6 = handles.robot.fkine(handles.q)
     switch get(src, 'Style')
         case 'slider'
             % slider changed, get value and reflect it to edit box
             newval = get(src, 'Value');
-            set(handles.edit2(j), 'String', num2str(handles.qscale2*newval, 3));
+            set(handles.edit2(j), 'String', num2str((handles.qscale2*newval)+T6(j,4), 3));
         case 'edit'
             % edit box changed, get value and reflect it to slider
             newval = str2double(get(src, 'String')) / handles.qscale2;
