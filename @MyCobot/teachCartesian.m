@@ -18,8 +18,26 @@ function teachCartesian(robot)
     handles = InstallThePanel(handles);
     handles = SetQlimToFinite(handles);
     handles = GetCurrentRobotState(handles);
-    MakeSliders(handles);
-    AddExitButton(handles);
+    handles = MakeSliders(handles);
+    handles = AddExitButton(handles);
+    handles = AssignCallbacks(handles);
+end
+
+function handles = AssignCallbacks(handles)
+    %---- now assign the callbacks
+    n = size(handles.sliderLabels,2);
+    for j=1:n
+        % text edit box
+        set(handles.edit(j), ...
+            'Interruptible', 'off', ...
+            'Callback', @(src,event)teach_callback(src, handles.robot.model.name, j, handles));
+        
+        % slider
+        set(handles.slider(j), ...
+            'Interruptible', 'off', ...
+            'BusyAction', 'queue', ...
+            'Callback', @(src,event)teach_callback(src, handles.robot.model.name, j, handles));
+    end
 end
 
 function resize_callback(handles)
@@ -40,7 +58,7 @@ function quit_callback(handles)
     set(handles.curax, 'Units', 'Normalized', 'OuterPosition', [0 0 1 1])
 end
 
-function AddExitButton(handles)
+function handles = AddExitButton(handles)
     %---- add buttons
     uicontrol(handles.panel, 'Style', 'pushbutton', ...
         'Units', 'normalized', ...
@@ -53,10 +71,10 @@ function AddExitButton(handles)
         'String', 'X');
 end
 
-function MakeSliders(handles)
+function handles = MakeSliders(handles)
     %---- sliders
     % Create the sliders
-    n = size(handles.sliderLabels,2);      % xyz
+    n = size(handles.sliderLabels,2);
     for j=1:n
         % slider label
         uicontrol(handles.panel, 'Style', 'text', ...
