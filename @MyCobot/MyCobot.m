@@ -213,6 +213,6 @@ classdef MyCobot < EnvironmentObject
         %% Function to start "teach"
         function StartTeach(self)
             self.teach();
-        end
+        end     
     end
 end

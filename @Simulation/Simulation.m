@@ -194,10 +194,5 @@ classdef Simulation < handle
         function StartTeach(self)
             self.envObjList{3}{1}.StartTeach();
         end
-        
-        %% Function to stop "teach"
-        function StopTeach(self)
-            self.envObjList{3}{1}.StopTeach();
-        end
     end
 end
