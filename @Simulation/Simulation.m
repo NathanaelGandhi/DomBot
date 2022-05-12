@@ -9,8 +9,8 @@ classdef Simulation < handle
         
         % Path properties
         pathType;               % Domino path type (Circle, line or semicircle)
-        pathStartPt;            % Start point for domino path
-        pathEndPt;              % End point for domino path
+        pathStartPt;            % 4x4 transform start point for domino path
+        pathEndPt;              % 4x4 transform end point for domino path
         
     end
     % Const Vars
@@ -216,6 +216,8 @@ classdef Simulation < handle
             % - Function will only work with one robot, and requires
             % modification if intending to implement more robots.
             
+            % NOTE - Path inputs are specified from the robots base frame
+            
             % Log the sim state
             self.logObj.LogInfo('[SIM] Setting Domino Path');
             
@@ -233,7 +235,7 @@ classdef Simulation < handle
                 self.pathStartPt = startPt;
                 self.pathEndPt = endPt;
             else %ERROR
-                self.logObj.LogInfo('[SIM] ERROR - Path cannot be set');
+                self.logObj.LogInfo('[SIM] ERROR - Domino path not specified');
             end
         end
         
@@ -245,13 +247,28 @@ classdef Simulation < handle
             % can select to have a circle path with 4 dominoes. Suggest
             % correction of GUI to have a minimum number of 4 dominoes.
             
-            % Dominoes are placed along the path at intervals determined by
+            % NOTE - Dominoes are placed along the path at intervals determined by
             % the amount of dominoes selected by the user. The start point
             % will be occupied, but the end point will not to avoid
             % overlap.
             
             % Log the sim state
             self.logObj.LogInfo('[SIM] Calculating Domino Poses');
+            
+            % Determine domino goal poses using stored data
+            if self.pathType == self.CIRCLE
+                % Set a path around the robot with the specified startPt
+                %pathRadius = self.pathStartPt
+                
+            elseif self.pathType == self.SEMICIRCLE
+                % Empty for now
+                
+            elseif self.pathType == self.LINE
+                % Empty for now
+                
+            else % ERROR
+                self.logObj.LogInfo('[SIM] ERROR - Domino path not set');
+            end
             
         end
     end
