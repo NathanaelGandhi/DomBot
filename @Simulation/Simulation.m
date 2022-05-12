@@ -6,6 +6,12 @@ classdef Simulation < handle
         envObjList;
         dominosTotal;
         simEStop;       % Flag for simulation E-Stop
+        
+        % Path properties
+        pathType;               % Domino path type (Circle, line or semicircle)
+        pathStartPt;            % Start point for domino path
+        pathEndPt;              % End point for domino path
+        
     end
     % Const Vars
     properties(Constant)
@@ -18,6 +24,11 @@ classdef Simulation < handle
         STOPSIGN = 7;
         ROBOTREACH = 0.28;       %280 mm range of motion from MyCobot manual
         ROBOTBASERADIUS = 0.05;  % Exclusion radius for robot base
+        
+        % Domino path constants
+        CIRCLE = 1;
+        SEMICIRCLE = 2;
+        LINE = 3;
     end
     
     methods
@@ -193,6 +204,55 @@ classdef Simulation < handle
         %% Function to start "teach"
         function StartTeach(self)
             self.envObjList{3}{1}.StartTeach();
+        end
+        
+        %% Function to set desired domino path
+        function SetDominoPath(self, pathInput, startPt, endPt)
+            % UPDATE REQUIRED
+            % - If, elseif statement used as further modification will
+            % require this later on. 
+            % - Program does not check for path validity of the line,
+            % meaning that it can pass through the robot base.
+            % - Function will only work with one robot, and requires
+            % modification if intending to implement more robots.
+            
+            % Log the sim state
+            self.logObj.LogInfo('[SIM] Setting Domino Path');
+            
+            % Set the domino path based on user input
+            if pathInput == self.CIRCLE
+                self.pathType = pathInput;
+                self.pathStartPt = startPt;
+                self.pathEndPt = endPt; %% EndPt will equal startPT for circle
+            elseif pathInput == self.SEMICIRCLE
+                self.pathType = pathInput;
+                self.pathStartPt = startPt;
+                self.pathEndPt = endPt;
+            elseif pathInput == self.LINE
+                self.pathType = pathInput;
+                self.pathStartPt = startPt;
+                self.pathEndPt = endPt;
+            else %ERROR
+                self.logObj.LogInfo('[SIM] ERROR - Path cannot be set');
+            end
+        end
+        
+        %% Function to generate goal domino poses
+        function GenerateDominoGoalPoses(self)
+            % UPDATE REQUIRED - functional for trailer video
+            % - program does not check for the quantity of dominoes, and
+            % whether this is valid for the selected path (i.e. the user
+            % can select to have a circle path with 4 dominoes. Suggest
+            % correction of GUI to have a minimum number of 4 dominoes.
+            
+            % Dominoes are placed along the path at intervals determined by
+            % the amount of dominoes selected by the user. The start point
+            % will be occupied, but the end point will not to avoid
+            % overlap.
+            
+            % Log the sim state
+            self.logObj.LogInfo('[SIM] Calculating Domino Poses');
+            
         end
     end
 end
