@@ -11,6 +11,7 @@ classdef Simulation < handle
         pathType;               % Domino path type (Circle, line or semicircle)
         pathStartPt;            % 4x4 transform start point for domino path (world frame)
         pathEndPt;              % 4x4 transform end point for domino path (world frame)
+        currentStep;            % Value for current trajectory steps
         
     end
     % Const Vars
@@ -190,6 +191,25 @@ classdef Simulation < handle
         end
         
         %% Function to run simulation "main" loop
+        function SetUpSim(self)
+            % TEST - set start point for path (in robot base frame)
+            startPoint = transl(0.2,0,0);
+            endPoint = startPoint;
+            
+            % Set path for dominoes
+            SetDominoPath(self, self.CIRCLE, startPoint, endPoint);
+            
+            % Set goal poses for each domino
+            GenerateDominoGoalPoses(self);
+            
+            % TEST - Verify correct goal pose calculation (plots dominoes
+            % in goal poses)
+%             for i = 1:self.dominosTotal
+%                 self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
+%             end
+        end
+        
+        %% Function to run simulation "main" loop
         function RunSim(self)
             % UPDATE REQIUIRED - changes made for video
             
@@ -209,16 +229,13 @@ classdef Simulation < handle
 %                 self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
 %             end
             
-            while (1)
+            while (self.simRunning)
                % Sim running. Loop while flag condition is true 
-               if (self.simEStop)
-                   pause(1);
-                   self.logObj.LogDebug('[SIM] Sim E-stopped');
-                   continue
-               elseif (self.simRunning)
+               if (self.simRunning)
                    pause(1);
                    self.logObj.LogDebug('[SIM] Sim Running'); 
                elseif (self.simRunning == 0)
+                   self.logObj.LogDebug('[SIM] Sim E-Stopped');
                    break;
                end
             end
