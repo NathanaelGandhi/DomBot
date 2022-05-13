@@ -87,10 +87,10 @@ function teach_callback(src, name, j, handles)
     % and save it back to the graphical object
     set(h(1), 'UserData', info);
     
-    % Update all sliders and edit boxes
     % recompute the robot tool pose
     handles.T6 = handles.robot.model.fkine(info.q);
     
+    % Update all sliders and edit boxes
     n = size(handles.sliderLabels,2);
     for k=1:n
         switch(k)
