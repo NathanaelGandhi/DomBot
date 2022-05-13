@@ -18,6 +18,7 @@ function teachCartesian(robot)
     %-------------------------------
     handles = InstallThePanel(handles);
     handles = SetQlimToFinite(handles);
+    handles.q = [];         % Force check for existing robots
     handles = GetCurrentRobotState(handles);
     handles = MakeSliders(handles);
     handles = CreatePositionDisplay(handles);
@@ -149,6 +150,7 @@ function teach_callback(src, name, j, handles)
     % src      = the object that caused the event
     % name     = name of the robot
     % j        = the index concerned (1..N)
+    steps = 1;
     
     % Get the updated value
     switch get(src, 'Style')
@@ -180,10 +182,12 @@ function teach_callback(src, name, j, handles)
         * trotz(euler(3));
    
     % Compute joint angles for new pose
-    CalculateTraj(handles.robot, transform, 1)      % self, Transform, steps
+    CalculateTraj(handles.robot, transform, steps)      % self, Transform, steps
     
-    % Move the robot 1 step
-    RunTraj(handles.robot)                       % self, increment
+    for i=1:steps
+        % Move the robot 1 step
+        RunTraj(handles.robot)                       % self, increment
+    end
     
     % recompute the robot tool pose - Update robot state
     handles.T6 = handles.robot.model.fkine(handles.robot.qCurrent);
@@ -214,7 +218,13 @@ function teach_callback(src, name, j, handles)
     end
      
     if ~isempty(handles.callback)
-        handles.callback(handles, info.q);
+        % find the graphical element of this name
+        if isempty(h)
+            error('RTB:teach:badarg', 'No graphical robot of this name found');
+        end
+        % get the info from its Userdata
+        info = get(h(1), 'UserData');
+        handles.callback(handles.robot, info.q);
     end
 end
 
@@ -313,7 +323,7 @@ end
 
 function handles = GetCurrentRobotState(handles)
     %---- get the current robot state
-    if isempty(handles.q)
+    if isempty(handles.q) 
         % check to see if there are any graphical robots of this name
         rhandles = findobj('Tag', handles.robot.model.name);
         % find the graphical element of this name
@@ -327,7 +337,7 @@ function handles = GetCurrentRobotState(handles)
             handles.q = info.q;
         end
     else
-    handles.robot.model.plot(handles.q);
+        handles.robot.model.plot(handles.q);
     end
     handles.T6 = handles.robot.model.fkine(handles.q);
 end
@@ -338,7 +348,6 @@ function handles = SetQlimToFinite(handles)
     if any(isinf(qlim))
         error('RTB:teach:badarg', 'Must define joint coordinate limits for prismatic axes, set qlim properties for prismatic Links');
     end
-    handles.q = [];
 end
 
 function handles = InstallThePanel(handles)
