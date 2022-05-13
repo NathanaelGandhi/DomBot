@@ -79,7 +79,7 @@ function teach_callback(src, name, j, handles)
     CalculateTraj(handles.robot, transform, 1)      % self, Transform, steps
     
     % Move the robot 1 step
-    RunTraj(handles.robot, 1)                       % self, increment
+    RunTraj(handles.robot)                       % self, increment
     
     % update the stored joint coordinates
     info.q = handles.robot.qCurrent;
