@@ -1,7 +1,8 @@
 classdef MyCobot < EnvironmentObject
     %% Properties
     properties
-        model;  % Class object
+        model;  % MyCobot handle
+        tc;     % Teach Cartesian handle
         workspace;
         radiusOfMotion = 0.286; %280 mm range of motion from MyCobot manual 
         rangeOfMotionPlot;
@@ -89,7 +90,7 @@ classdef MyCobot < EnvironmentObject
         function cam = GetCamera(self)
             cam = CentralCamera('focal', 0.08, 'pixel', 10e-5, ...
             'resolution', [1024 1024], 'centre', [512 512],'name', 'MyCobotCamera');
-            cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
+            cam.T = self.myFkine(self.qCurrent)*trotx(pi);
         end
         
         
@@ -160,7 +161,6 @@ classdef MyCobot < EnvironmentObject
         % Incorporates RMRC and damped least squares
         % Default end effector trajectory is a straight line, Ti to Tf
         % checks if inputed transform exceeds range of motion (280 mm)
-
         % 1.2) Allocate array data
         self.qMatrix = zeros(steps,6);          % Array for joint angles
         qdot = zeros(steps,6);             % Array for joint velocities
@@ -170,7 +170,7 @@ classdef MyCobot < EnvironmentObject
         angleError = zeros(3,steps);       % For plotting trajectory error
         
         % Calculates trapizoidal trajectory of end effector position
-        Ti = self.model.fkine(self.qCurrent);   % Transform of current end effector position
+        Ti = self.myFkine(self.qCurrent);   % Transform of current end effector position
         Tf = Transform;                         % Transform of final end effector position
         s = lspb(0,1,steps);               % Trapezoidal trajectory scalar
         for i=1:steps
@@ -180,7 +180,7 @@ classdef MyCobot < EnvironmentObject
         end
         self.qMatrix(1,:) = self.model.ikcon(Tf,self.qCurrent);
         for i=1:steps-1
-            T = self.model.fkine(self.qMatrix(i,:));
+            T = self.myFkine(self.qMatrix(i,:));
             deltaX = x(:,i+1) - T(1:3, 4);      % Get position error from next waypoint
             Rd = rpy2r(theta(1,i+1),theta(2,i+1),theta(3,i+1));      % Get next RPY angles, convert to rotation matrix
             Ra = T(1:3, 1:3);                % Current end-effector rotation matrix
@@ -221,7 +221,7 @@ classdef MyCobot < EnvironmentObject
             self.qCurrent = self.qMatrix(1,:);
             self.qMatrix(1,:) = [];
             self.model.animate(self.qCurrent);
-            self.cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
+            self.cam.T = self.myFkine(self.qCurrent)*trotx(pi);
             drawnow;
         end
         
