@@ -5,6 +5,7 @@ classdef MyCobot < EnvironmentObject
         workspace;
         radiusOfMotion = 0.286; %280 mm range of motion from MyCobot manual 
         rangeOfMotionPlot;
+        endEffectorPose;
         
         % Variables for calculating trajectory (RMRC)
         qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
@@ -221,7 +222,8 @@ classdef MyCobot < EnvironmentObject
             self.qCurrent = self.qMatrix(1,:);
             self.qMatrix(1,:) = [];
             self.model.animate(self.qCurrent);
-            self.cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
+            self.endEffectorPose = self.model.fkine(self.qCurrent); % Save the end effector position
+            self.cam.T = self.endEffectorPose*trotx(pi);
             drawnow;
         end
         
