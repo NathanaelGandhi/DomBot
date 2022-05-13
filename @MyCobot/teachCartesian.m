@@ -6,10 +6,11 @@ function teachCartesian(self)
     self.tc.height = 0.06;  % height of slider rows
     % Slider properties
     self.tc.sliderLabels = ['X','Y','Z','R', 'P', 'Y'];
+    sliderTollerance = 0.02;    % 2cm tollerance
     self.tc.sliderLimits = [... 
-        -self.radiusOfMotion, self.radiusOfMotion; ...
-        -self.radiusOfMotion, self.radiusOfMotion; ...
-        self.pose(3,4), self.pose(3,4)+0.412; ...         %0.411 appears to be max simulated reach
+        -self.radiusOfMotion-sliderTollerance, self.radiusOfMotion+sliderTollerance; ...
+        -self.radiusOfMotion-sliderTollerance, self.radiusOfMotion+sliderTollerance; ...
+        self.pose(3,4), self.pose(3,4)+0.411+sliderTollerance; ...  %0.411 appears to be max simulated reach
         -180, 180; ...     & Degrees with +/-1 for overshoot
         -180, 180; ...
         -180, 180]; 
@@ -38,11 +39,11 @@ function teach_callback(src, self, j)
             newval = get(src, 'Value');
         case 'edit'
             % edit box changed, get value
-            newval = str2double(get(src, 'String'));
+            newval = str2double(get(src, 'String'));    % Degrees
     end
     
     % Get the angles
-    angles = tr2rpy(self.tc.T6);
+    angles = tr2rpy(self.tc.T6);                        % Radians
     
     % Assign the relevant updated value
     switch(j)
@@ -51,14 +52,14 @@ function teach_callback(src, self, j)
             self.tc.T6(j,4) = newval;
         case {4,5,6}
             % Got an angle in radians
-            angles(j-3) = newval;
+            angles(j-3) = deg2rad(newval);              % Radians
     end
     
     % Generate new end effector transform
     self.tc.T6 = transl(self.tc.T6(1,4),self.tc.T6(2,4),self.tc.T6(3,4)) ...
         * trotx(angles(1)) ...
         * troty(angles(2)) ...
-        * trotz(angles(3));
+        * trotz(angles(3));                     % Radians
    
     % Compute joint angles for new pose
     CalculateTraj(self, self.tc.T6, steps)      % self, Transform, steps
@@ -87,13 +88,13 @@ function teach_callback(src, self, j)
         % reflect it to edit box
         set(self.tc.edit(k), 'String', num2str(val, 3));
         % reflect it to slider
-        set(self.tc.slider(k), 'Value', rad2deg(val));  % Convert angle to degrees
+        set(self.tc.slider(k), 'Value', rad2deg(val));          % Degrees
     end
     
     % update the display in the teach window
     for i=1:3
         set(self.tc.t6.t(i), 'String', sprintf('%.3f', self.tc.T6(i,4)));
-        set(self.tc.t6.r(i), 'String', sprintf('%.3f', angles(i)));
+        set(self.tc.t6.r(i), 'String', sprintf('%.3f', rad2deg(angles(i))));    % Degrees
     end
 end
 
@@ -147,7 +148,6 @@ end
 
 function CreateOrientationDisplay(self)
  %---- set up the orientation display box
-    angle = rad2deg(tr2rpy(self.tc.T6));    % Degrees
     % R
     uicontrol(self.tc.panel, 'Style', 'text', ...
         'Units', 'normalized', ...
@@ -163,7 +163,7 @@ function CreateOrientationDisplay(self)
         'Position', [0.3 1-5*self.tc.height 0.6 self.tc.height], ...
         'FontUnits', 'normalized', ...
         'FontSize', 0.8, ...
-        'String', sprintf('%.3f', angle(1));
+        'String', sprintf('%.3f', self.tc.T6(1,3)));    % Degrees
     
     % P
     uicontrol(self.tc.panel, 'Style', 'text', ...
@@ -180,7 +180,7 @@ function CreateOrientationDisplay(self)
         'Position', [0.3 1-6*self.tc.height 0.6 self.tc.height], ...
         'FontUnits', 'normalized', ...
         'FontSize', 0.8, ...
-        'String', sprintf('%.3f', angle(2)));
+        'String', sprintf('%.3f', self.tc.T6(2,3)));    % Degrees
     
     % Y
     uicontrol(self.tc.panel, 'Style', 'text', ...
@@ -197,7 +197,7 @@ function CreateOrientationDisplay(self)
         'Position', [0.3 1-7*self.tc.height 0.6 self.tc.height], ...
         'FontUnits', 'normalized', ...
         'FontSize', 0.8, ...
-        'String', sprintf('%.3f', angle(3)));   
+        'String', sprintf('%.3f', self.tc.T6(3,3)));    % Degrees 
 end
 
 function CreatePositionDisplay(self)
@@ -270,14 +270,13 @@ function MakeSliders(self)
             'String', sprintf(self.tc.sliderLabels(:,j)));
         
         % slider itself
-        angle = tr2rpy(self.tc.T6);
         switch(j)
             case {1,2,3}
                 % Get XYZ positions
                 val = self.tc.T6(j,4);
             case {4,5,6}
-                % Get the angles - Degrees
-                val = rad2deg(angle(j-3));
+                % Get the angles                    % Degrees
+                val = self.tc.T6(j-3,3);
         end
         self.tc.slider(j) = uicontrol(self.tc.panel, 'Style', 'slider', ...
             'Units', 'normalized', ...
