@@ -213,15 +213,15 @@ classdef Simulation < handle
         function RunSim(self)
             % UPDATE REQIUIRED - changes made for video
             
-            % TEST - set start point for path (in robot base frame)
-            startPoint = transl(0.2,0,0);
-            endPoint = startPoint;
-            
-            % Set path for dominoes
-            SetDominoPath(self, self.CIRCLE, startPoint, endPoint);
-            
-            % Set goal poses for each domino
-            GenerateDominoGoalPoses(self);
+%             % TEST - set start point for path (in robot base frame)
+%             startPoint = transl(0.2,0,0);
+%             endPoint = startPoint;
+%             
+%             % Set path for dominoes
+%             SetDominoPath(self, self.CIRCLE, startPoint, endPoint);
+%             
+%             % Set goal poses for each domino
+%             GenerateDominoGoalPoses(self);
             
             % Test to verify correct goal pose calculation (plots dominoes
             % in goal poses)
@@ -242,9 +242,19 @@ classdef Simulation < handle
              self.logObj.LogInfo('[SIM] Simulation Stopped');
         end
         
-        %% Function to start "teach"
-        function StartTeach(self)
-            self.envObjList{3}{1}.StartTeach();
+        %% Function to start "teach classic"
+        function StartClassicTeach(self)
+            self.envObjList{3}{1}.StartClassicTeach();
+        end
+        
+        %% Function to start "teach cartesian"
+        function StartCartesianTeach(self)
+            self.envObjList{3}{1}.StartCartesianTeach();
+        end
+        
+        %% Function to start "teach object"
+        function StartObjectTeach(self)
+            self.envObjList{3}{1}.StartObjectTeach();
         end
         
         %% Function to set desired domino path
