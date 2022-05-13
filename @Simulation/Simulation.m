@@ -137,7 +137,10 @@ classdef Simulation < handle
                     self.envObjList{self.MYCOBOT}{1}.pose(13)+xPose, ...
                     self.envObjList{self.MYCOBOT}{1}.pose(14)+yPose, ...
                     self.envObjList{self.MYCOBOT}{1}.pose(15));               % Domino Poses
-                self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));                  % Spawn single object 
+                self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));                % Spawn single object 
+                % Fixing the removal of 'pose' from domino class so I don't
+                % lose my mind
+                self.envObjList{self.DOMINO}{i}.pose = DominoPose;
             end
         end
         
@@ -191,6 +194,25 @@ classdef Simulation < handle
         
         %% Function to run simulation "main" loop
         function RunSim(self)
+            % UPDATE REQIUIRED - changes made for video
+            
+            % TEST - set start point for path
+            startPoint = transl(0.2,0,0);
+            endPoint = startPoint;
+            
+            % Set path for dominoes
+            SetDominoPath(self, self.CIRCLE, startPoint, endPoint);
+            
+            % Set goal poses for each domino
+            GenerateDominoGoalPoses(self);
+            
+            % Test to verify correct goal pose calculation (plots dominoes
+            % in goal poses)
+            for i = 1:self.dominosTotal
+                self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
+            end
+            
+            
             while (self.simRunning)
                % Sim running. Loop while flag condition is true 
                if (self.simRunning)
@@ -223,17 +245,17 @@ classdef Simulation < handle
             
             % Set the domino path based on user input
             if pathInput == self.CIRCLE
-                self.pathType = self.envObjList{self.MYCOBOT}{1}.model.base * pathInput;
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
-                self.pathEndPt = endPt; %% EndPt will equal startPT for circle
+                self.pathType = pathInput
+                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt
+                self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt; %% EndPt will equal startPT for circle
             elseif pathInput == self.SEMICIRCLE
-                self.pathType = self.envObjList{self.MYCOBOT}{1}.model.base * pathInput;
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
-                self.pathEndPt = endPt;
+                self.pathType = pathInput
+                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt
+                self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt;
             elseif pathInput == self.LINE
-                self.pathType = self.envObjList{self.MYCOBOT}{1}.model.base * pathInput;
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
-                self.pathEndPt = endPt;
+                self.pathType = pathInput
+                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt
+                self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt;
             else %ERROR
                 self.logObj.LogInfo('[SIM] ERROR - Domino path not specified');
             end
@@ -263,10 +285,10 @@ classdef Simulation < handle
                 pathRadius = hypot(self.pathStartPt(13),self.pathStartPt(14));
                 
                 % Determine distance around circle for each domino
-                goalTransIncrement = (2*pi*pathRadius)/self.dominoesTotal;
+                goalTransIncrement = (2*pi*pathRadius)/self.dominosTotal;
                 
                 % Determine the increment 
-                goalAngleIncrement = 360/self.dominoesTotal;
+                goalAngleIncrement = 360/self.dominosTotal;
                 
                 % Set the transform for the first domino (in world frame)
                 pathTF = self.pathStartPt;
@@ -275,11 +297,11 @@ classdef Simulation < handle
                 for i = 1:self.dominosTotal
                     
                     % Set the goal pose of the current domino
-                    self.envObjList{self.DOMINO}{i}.model.desiredPose = pathTF;
+                    self.envObjList{self.DOMINO}{i}.desiredPose = pathTF;
                     
                     % Determine the goal pose of the next domino
-                    pathTF = pathTF * transl(goalTransIncrement, 0, 0) * ...
-                        trotz(deg2rad(goalAngleIncrement));
+                    pathTF = pathTF * trotz(deg2rad(goalAngleIncrement/2)) * transl(0, goalTransIncrement, 0) * ...
+                        trotz(deg2rad(goalAngleIncrement/2));
                     
                 end
                 
