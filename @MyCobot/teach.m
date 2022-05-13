@@ -68,7 +68,7 @@ function teach(myCobot, varargin)
     
     %-------------------------------
     % parameters for teach panel
-    bgcol = [135 206 250]/255;  % background color
+    bgcol = [103 233 98]/255;  % background color
     height = 0.06;  % height of slider rows
     %-------------------------------
     

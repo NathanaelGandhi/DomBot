@@ -3,7 +3,7 @@ classdef MyCobot < EnvironmentObject
     properties
         model;  % Class object
         workspace;
-        radiusOfMotion = 0.28; %280 mm range of motion from MyCobot manual 
+        radiusOfMotion = 0.286; %280 mm range of motion from MyCobot manual 
         rangeOfMotionPlot;
         
         % Variables for calculating trajectory (RMRC)
@@ -225,9 +225,20 @@ classdef MyCobot < EnvironmentObject
             drawnow;
         end
         
-        %% Function to start "teach"
-        function StartTeach(self)
+        %% Function to start "teach classic"
+        function StartClassicTeach(self)
             self.teach();
         end
+        
+        %% Function to start "teach cartesian"
+        function StartCartesianTeach(self)
+            self.teachCartesian();
+        end
+        
+        %% Function to start "teach object"
+        function StartObjectTeach(self)
+            self.teachObject();
+        end
+        
     end
 end
