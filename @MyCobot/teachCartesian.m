@@ -70,8 +70,7 @@ function teach_callback(src, self, j)
     end
     
     % recompute the robot tool pose - Update robot state
-    self.tc.T6 = self.myFkine(self.qCurrent);
-%     handles.T6 = handles.robot.endEffectorPose;
+    GetEndEffectorTransform(self);
     
     % Update all sliders and edit boxes
     n = size(self.tc.sliderLabels,2);
@@ -314,23 +313,6 @@ end
 
 function GetEndEffectorTransform(self)
     %---- get the current robot state
-%     if isempty(handles.q) 
-%         % check to see if there are any graphical robots of this name
-%         rhandles = findobj('Tag', handles.robot.model.name);
-%         % find the graphical element of this name
-%         if isempty(rhandles)
-%             error('RTB:teach:badarg', 'No graphical robot of this name found');
-%         end
-%         % get the info from its Userdata
-%         info = get(rhandles(1), 'UserData');
-%         % the handle contains current joint angles (set by plot)
-%         if ~isempty(info.q)
-%             handles.q = info.q;
-%         end
-%     else
-%         handles.robot.model.plot(handles.q);
-%     end
-%     handles.T6 = handles.robot.model.fkine(handles.q);
     self.tc.T6 = self.myFkine(self.qCurrent);
 end
 
