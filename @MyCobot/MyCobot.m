@@ -221,8 +221,7 @@ classdef MyCobot < EnvironmentObject
             self.qCurrent = self.qMatrix(1,:);
             self.qMatrix(1,:) = [];
             self.model.animate(self.qCurrent);
-            self.endEffectorPose = self.myFkine(self.qCurrent); % Save the end effector position
-            self.cam.T = self.endEffectorPose*trotx(pi);
+            self.cam.T = self.myFkine(self.qCurrent)*trotx(pi);
             drawnow;
         end
         
