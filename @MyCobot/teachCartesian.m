@@ -178,21 +178,7 @@ function teach_callback(src, name, j, handles)
         * trotx(euler(1)) ...
         * troty(euler(2)) ...
         * trotz(euler(3));
-    
-%     % find all graphical objects tagged with the robot name, this is the
-%     % instancs of that robot across all figures
-%     h = findobj('Tag', name);
-%     % find the graphical element of this name
-%     if isempty(h)
-%         error('RTB:teach:badarg', 'No graphical robot of this name found');
-%     end
-%     % get the info from its Userdata
-%     info = get(h(1), 'UserData');
-    
-
-    
-
-    
+   
     % Compute joint angles for new pose
     CalculateTraj(handles.robot, transform, 1)      % self, Transform, steps
     
@@ -201,12 +187,6 @@ function teach_callback(src, name, j, handles)
     
     % recompute the robot tool pose - Update robot state
     handles.T6 = handles.robot.model.fkine(handles.robot.qCurrent);
-    
-%     % update the stored joint coordinates
-%     info.q = handles.robot.qCurrent;
-% 
-%     % and save it back to the graphical object
-%     set(h(1), 'UserData', info);
     
     % Update all sliders and edit boxes
     n = size(handles.sliderLabels,2);
@@ -227,39 +207,15 @@ function teach_callback(src, name, j, handles)
         set(handles.slider(k), 'Value', val);
     end
     
-
-
-    
-%     
-%     % update all robots of this name
-%     handles.robot.model.animate(handles.robot, info.q);
-%     
-%     
-%     % compute the robot tool pose
-%     T6 = handles.robot.fkine(info.q);
-%     
-%     % convert orientation to desired format
-%     switch handles.orientation
-%         case 'approach'
-%             orient = T6(:,3);    % approach vector
-%         case 'eul'
-%             orient = tr2eul(T6, 'setopt', handles.opt);
-%         case'rpy'
-%             orient = tr2rpy(T6, 'setopt', handles.opt);
-%     end
-%     
     % update the display in the teach window
     for i=1:3
         set(handles.t6.t(i), 'String', sprintf('%.3f', handles.T6(i,4)));
         set(handles.t6.r(i), 'String', sprintf('%.3f', rad2deg(euler(i))));
     end
-%     
+     
     if ~isempty(handles.callback)
         handles.callback(handles, info.q);
     end
-%     
-%     %notify(handles.robot, 'Moved');
-
 end
 
 function handles = AssignCallbacks(handles)
