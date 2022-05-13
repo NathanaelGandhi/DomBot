@@ -15,17 +15,22 @@ classdef MyCobot < EnvironmentObject
         % Damped Least Squares variables
         epsilon = 0.1;
         lambdaMax = 5E-2;
+        
+        % Camera variables
+        cam;
+        cam_h;                                  % Cam plot
     end
     
     
     %% Static Methods
     methods (Static) 
-        %calculates distance between transforms
+        %% Calculates distance between transforms
         function distance = disTr(tr1, tr2)
             sq = tr2(1:3, 4)-tr1(1:3, 4);
             distance = sqrt(transpose(sq)*sq);
         end
         
+        %% Create MyCobot SerialLink model
         function model = GetMyCobotRobot()
             pause(0.001);
             name = ['MyCobot_',datestr(now,'yyyymmddTHHMMSSFFF')];
@@ -51,6 +56,7 @@ classdef MyCobot < EnvironmentObject
             
             model = SerialLink(L, 'name', name);
         end
+        
     end
     %% Methods    
     methods
@@ -60,6 +66,7 @@ classdef MyCobot < EnvironmentObject
             self = self@EnvironmentObject(logArg, id, pose, 'mycobot');
             self.workspace = self.SetMyCobotWorkspace();
             self.model = self.GetMyCobotRobot();
+            self.cam = self.GetCamera();
             self.PlotAndColourRobot();                      % robot,workspace);
         end
         
@@ -76,6 +83,13 @@ classdef MyCobot < EnvironmentObject
         %% To make the robot retreat from a simulated safety symbol using visual servoing and RMRC
         function robotRetreat(self)
             
+        end
+        
+        %% Create camera for visual servoing
+        function cam = GetCamera(self)
+            cam = CentralCamera('focal', 0.08, 'pixel', 10e-5, ...
+            'resolution', [1024 1024], 'centre', [512 512],'name', 'MyCobotCamera');
+            cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
         end
 
         %% PlotAndColourRobot
@@ -203,8 +217,9 @@ classdef MyCobot < EnvironmentObject
         function RunTraj(self, increment)
             % Should be placed in a for loop with the same number of steps
             % that was calculated
-            self.model.animate(self.qMatrix(increment,:));
-            self.qCurrent =  self.qMatrix(increment,:);
+            self.qCurrent = self.qMatrix(increment,:);
+            self.model.animate(self.qCurrent);
+            self.cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
             drawnow;
         end
         
