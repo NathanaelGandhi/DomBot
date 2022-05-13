@@ -213,15 +213,15 @@ classdef Simulation < handle
         function RunSim(self)
             % UPDATE REQIUIRED - changes made for video
             
-            % TEST - set start point for path (in robot base frame)
-            startPoint = transl(0.2,0,0);
-            endPoint = startPoint;
-            
-            % Set path for dominoes
-            SetDominoPath(self, self.CIRCLE, startPoint, endPoint);
-            
-            % Set goal poses for each domino
-            GenerateDominoGoalPoses(self);
+%             % TEST - set start point for path (in robot base frame)
+%             startPoint = transl(0.2,0,0);
+%             endPoint = startPoint;
+%             
+%             % Set path for dominoes
+%             SetDominoPath(self, self.CIRCLE, startPoint, endPoint);
+%             
+%             % Set goal poses for each domino
+%             GenerateDominoGoalPoses(self);
             
             % Test to verify correct goal pose calculation (plots dominoes
             % in goal poses)
