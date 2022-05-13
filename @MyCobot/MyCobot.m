@@ -9,33 +9,37 @@ classdef MyCobot < EnvironmentObject
         % Variables for calculating trajectory (RMRC)
         qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
-        steps;                              
         deltaT = 0.05;                          % Discrete time step
         W = diag([1 1 1 0.1 0.1 0.1]);          % Weighting matrix for the velocity vector
         
         % Damped Least Squares variables
         epsilon = 0.1;
         lambdaMax = 5E-2;
+        
+        % Camera variables
+        cam;
+        cam_h;                                  % Cam plot
     end
     
     
     %% Static Methods
     methods (Static) 
-        %calculates distance between transforms
+        %% Calculates distance between transforms
         function distance = disTr(tr1, tr2)
             sq = tr2(1:3, 4)-tr1(1:3, 4);
             distance = sqrt(transpose(sq)*sq);
         end
         
+        %% Create MyCobot SerialLink model
         function model = GetMyCobotRobot()
             pause(0.001);
             name = ['MyCobot_',datestr(now,'yyyymmddTHHMMSSFFF')];
-            L(1) = Link('d', 0.13156, 'a', 0, 'alpha', pi/2,'qlim',[deg2rad(-360),deg2rad(360)]);
-            L(2) = Link('d', -0.06639, 'a', 0.1104, 'alpha', 0,'qlim',[deg2rad(-360),deg2rad(360)]);
-            L(3) = Link('d', 0.06639, 'a', 0.096, 'alpha', 0,'qlim',[deg2rad(-360),deg2rad(360)]);
-            L(4) = Link('d', -0.06639, 'a', 0, 'alpha', -pi/2,'qlim',[deg2rad(-360),deg2rad(360)]);
-            L(5) = Link('d', 0.07318, 'a', 0, 'alpha', -pi/2,'qlim',[deg2rad(-360),deg2rad(360)]);
-            L(6) = Link('d', -0.0436, 'a', 0, 'alpha', 0,'qlim',[deg2rad(-360),deg2rad(360)]);
+            L(1) = Link('d', 0.13156, 'a', 0, 'alpha', pi/2);
+            L(2) = Link('d', -0.06639, 'a', 0.1104, 'alpha', 0);
+            L(3) = Link('d', 0.06639, 'a', 0.096, 'alpha', 0);
+            L(4) = Link('d', -0.06639, 'a', 0, 'alpha', -pi/2);
+            L(5) = Link('d', 0.07318, 'a', 0, 'alpha', -pi/2);
+            L(6) = Link('d', -0.0436, 'a', 0, 'alpha', 0);
             
             %offset
             L(2).offset = pi/2;
@@ -52,6 +56,7 @@ classdef MyCobot < EnvironmentObject
             
             model = SerialLink(L, 'name', name);
         end
+        
     end
     %% Methods    
     methods
@@ -61,6 +66,7 @@ classdef MyCobot < EnvironmentObject
             self = self@EnvironmentObject(logArg, id, pose, 'mycobot');
             self.workspace = self.SetMyCobotWorkspace();
             self.model = self.GetMyCobotRobot();
+            self.cam = self.GetCamera();
             self.PlotAndColourRobot();                      % robot,workspace);
         end
         
@@ -78,7 +84,15 @@ classdef MyCobot < EnvironmentObject
         function robotRetreat(self)
             
         end
-
+        
+        %% Create camera for visual servoing
+        function cam = GetCamera(self)
+            cam = CentralCamera('focal', 0.08, 'pixel', 10e-5, ...
+            'resolution', [1024 1024], 'centre', [512 512],'name', 'MyCobotCamera');
+            cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
+        end
+        
+        
         %% PlotAndColourRobot
         function PlotAndColourRobot(self)
             % Generate face, vertex and ply data for all links
@@ -148,25 +162,24 @@ classdef MyCobot < EnvironmentObject
         % checks if inputed transform exceeds range of motion (280 mm)
 
         % 1.2) Allocate array data
-        self.steps = steps;
-        self.qMatrix = zeros(self.steps,6);          % Array for joint angles
-        qdot = zeros(self.steps,6);             % Array for joint velocities
-        theta = zeros(3,self.steps);            % Array for roll-pitch-yaw angles
-        x = zeros(3,self.steps);                % Array for x-y-z trajectory
-        positionError = zeros(3,self.steps);    % For plotting trajectory error
-        angleError = zeros(3,self.steps);       % For plotting trajectory error
+        self.qMatrix = zeros(steps,6);          % Array for joint angles
+        qdot = zeros(steps,6);             % Array for joint velocities
+        theta = zeros(3,steps);            % Array for roll-pitch-yaw angles
+        x = zeros(3,steps);                % Array for x-y-z trajectory
+        positionError = zeros(3,steps);    % For plotting trajectory error
+        angleError = zeros(3,steps);       % For plotting trajectory error
         
         % Calculates trapizoidal trajectory of end effector position
         Ti = self.model.fkine(self.qCurrent);   % Transform of current end effector position
         Tf = Transform;                         % Transform of final end effector position
-        s = lspb(0,1,self.steps);               % Trapezoidal trajectory scalar
-        for i=1:self.steps
+        s = lspb(0,1,steps);               % Trapezoidal trajectory scalar
+        for i=1:steps
             x(:,i) = (1-s(i))*Ti(1:3, 4)+s(i)*Tf(1:3,4);
             %theta(:,i) = (1-s(i))*tr2rpy(Ti)+s(i)*tr2rpy(Tf);
             theta(:,i) = tr2rpy(trotx(0));
         end
         self.qMatrix(1,:) = self.model.ikcon(Tf,self.qCurrent);
-        for i=1:self.steps-1
+        for i=1:steps-1
             T = self.model.fkine(self.qMatrix(i,:));
             deltaX = x(:,i+1) - T(1:3, 4);      % Get position error from next waypoint
             Rd = rpy2r(theta(1,i+1),theta(2,i+1),theta(3,i+1));      % Get next RPY angles, convert to rotation matrix
@@ -202,11 +215,13 @@ classdef MyCobot < EnvironmentObject
         end
         
         %% runs trajectory (with RMRC)
-        function RunTraj(self, increment)
+        function RunTraj(self)
             % Should be placed in a for loop with the same number of steps
             % that was calculated
-            self.model.animate(self.qMatrix(increment,:));
-            self.qCurrent =  self.qMatrix(increment,:);
+            self.qCurrent = self.qMatrix(1,:);
+            self.qMatrix(1,:) = [];
+            self.model.animate(self.qCurrent);
+            self.cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
             drawnow;
         end
         
