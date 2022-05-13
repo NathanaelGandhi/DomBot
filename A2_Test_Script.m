@@ -4,6 +4,7 @@ cobotLog = Log;
 tempPose = transl(0,0,0);
 dombot = MyCobot(cobotLog, 2, tempPose);
 
+%% CalculateTraj and RunTraj Tests
 nextPose = transl(0.2, 0.1, 0.1);
 % Calculates the trajectory (using RMRC)
 dombot.CalculateTraj(nextPose, 500);
