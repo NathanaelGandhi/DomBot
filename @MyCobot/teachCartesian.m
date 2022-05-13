@@ -83,14 +83,18 @@ function teach_callback(src, self, j)
             case {1,2,3}
                 % Get XYZ positions
                 val = self.tc.T6(k,4);
+                % reflect it to edit box
+                set(self.tc.edit(k), 'String', num2str(val, 3));
+                % reflect it to slider
+                set(self.tc.slider(k), 'Value', val);          % Degrees
             case {4,5,6}
                 % Get the angles
                 val = angles(k-3);  
+                % reflect it to edit box
+                set(self.tc.edit(k), 'String', num2str(rad2deg(val), 3));
+                % reflect it to slider
+                set(self.tc.slider(k), 'Value', rad2deg(val));          % Degrees
         end
-        % reflect it to edit box
-        set(self.tc.edit(k), 'String', num2str(rad2deg(val), 3));
-        % reflect it to slider
-        set(self.tc.slider(k), 'Value', rad2deg(val));          % Degrees
     end
     
     % update the display in the teach window
