@@ -204,9 +204,9 @@ classdef Simulation < handle
             
             % TEST - Verify correct goal pose calculation (plots dominoes
             % in goal poses)
-%             for i = 1:self.dominosTotal
-%                 self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
-%             end
+            for i = 1:self.dominosTotal
+                self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
+            end
         end
         
         %% Function to run simulation "main" loop
@@ -310,7 +310,7 @@ classdef Simulation < handle
                 goalAngleIncrement = 360/self.dominosTotal;
                 
                 % Set the transform for the first domino (in world frame)
-                pathTF = self.pathStartPt;
+                pathTF = self.pathStartPt * transl(0, 0, self.envObjList{self.DOMINO}{1}.dominoZOffset);
                 
                 % Add goal poses to dominoes (in world frame)
                 for i = 1:self.dominosTotal
@@ -319,7 +319,8 @@ classdef Simulation < handle
                     self.envObjList{self.DOMINO}{i}.desiredPose = pathTF;
                     
                     % Determine the goal pose of the next domino
-                    pathTF = pathTF * trotz(deg2rad(goalAngleIncrement/2)) * transl(0, goalTransIncrement, 0) * ...
+                    pathTF = pathTF * trotz(deg2rad(goalAngleIncrement/2)) * ...
+                        transl(0, goalTransIncrement, 0) * ...
                         trotz(deg2rad(goalAngleIncrement/2));
                     
                 end
