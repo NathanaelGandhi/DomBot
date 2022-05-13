@@ -190,7 +190,8 @@ function teach_callback(src, name, j, handles)
     end
     
     % recompute the robot tool pose - Update robot state
-    handles.T6 = handles.robot.model.fkine(handles.robot.qCurrent);
+%     handles.T6 = handles.robot.model.fkine(handles.robot.qCurrent);
+    handles.T6 = handles.robot.endEffectorPose;
     
     % Update all sliders and edit boxes
     n = size(handles.sliderLabels,2);
@@ -219,6 +220,7 @@ function teach_callback(src, name, j, handles)
      
     if ~isempty(handles.callback)
         % find the graphical element of this name
+        h = findobj('Tag', name);
         if isempty(h)
             error('RTB:teach:badarg', 'No graphical robot of this name found');
         end
