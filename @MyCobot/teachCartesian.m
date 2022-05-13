@@ -150,16 +150,14 @@ function teach_callback(src, name, j, handles)
     % name     = name of the robot
     % j        = the index concerned (1..N)
     
-    % Update the slider/edit box
+    % Get the updated value
     switch get(src, 'Style')
         case 'slider'
-            % slider changed, get value and reflect it to edit box
+            % slider changed, get value
             newval = get(src, 'Value');
-            set(handles.edit(j), 'String', num2str(newval, 3));
         case 'edit'
-            % edit box changed, get value and reflect it to slider
+            % edit box changed, get value
             newval = str2double(get(src, 'String'));
-            set(handles.slider(j), 'Value', newval);
     end
     
     % Get the euler angles
@@ -213,6 +211,7 @@ function teach_callback(src, name, j, handles)
     % Update all sliders and edit boxes
     n = size(handles.sliderLabels,2);
     for k=1:n
+        % Check if XYZ or Angle
         switch(k)
             case {1,2,3}
                 % Get XYZ positions
@@ -222,15 +221,10 @@ function teach_callback(src, name, j, handles)
                 euler = tr2eul(handles.T6);
                 val = rad2deg(euler(k-3));  % Convert angle to degrees
         end
-        if(k==j)
-            % We have already updated this, dont do anything
-        else
-            % Update all other sliders
-            % reflect it to edit box
-            set(handles.edit(k), 'String', num2str(val, 3));
-            % reflect it to slider
-            set(handles.slider(k), 'Value', val);
-        end
+        % reflect it to edit box
+        set(handles.edit(k), 'String', num2str(val, 3));
+        % reflect it to slider
+        set(handles.slider(k), 'Value', val);
     end
     
 
