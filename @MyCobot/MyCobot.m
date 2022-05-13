@@ -91,7 +91,8 @@ classdef MyCobot < EnvironmentObject
             'resolution', [1024 1024], 'centre', [512 512],'name', 'MyCobotCamera');
             cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
         end
-
+        
+        
         %% PlotAndColourRobot
         function PlotAndColourRobot(self)
             % Generate face, vertex and ply data for all links
@@ -214,10 +215,11 @@ classdef MyCobot < EnvironmentObject
         end
         
         %% runs trajectory (with RMRC)
-        function RunTraj(self, increment)
+        function RunTraj(self)
             % Should be placed in a for loop with the same number of steps
             % that was calculated
-            self.qCurrent = self.qMatrix(increment,:);
+            self.qCurrent = self.qMatrix(1,:);
+            self.qMatrix(1,:) = [];
             self.model.animate(self.qCurrent);
             self.cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
             drawnow;
