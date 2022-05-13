@@ -137,10 +137,7 @@ classdef Simulation < handle
                     self.envObjList{self.MYCOBOT}{1}.pose(13)+xPose, ...
                     self.envObjList{self.MYCOBOT}{1}.pose(14)+yPose, ...
                     self.envObjList{self.MYCOBOT}{1}.pose(15));               % Domino Poses
-                self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));                % Spawn single object 
-                % Fixing the removal of 'pose' from domino class so I don't
-                % lose my mind
-                self.envObjList{self.DOMINO}{i}.pose = DominoPose;
+                self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));                % Spawn single object
             end
         end
         
@@ -196,7 +193,7 @@ classdef Simulation < handle
         function RunSim(self)
             % UPDATE REQIUIRED - changes made for video
             
-            % TEST - set start point for path
+            % TEST - set start point for path (in robot base frame)
             startPoint = transl(0.2,0,0);
             endPoint = startPoint;
             
@@ -211,11 +208,6 @@ classdef Simulation < handle
 %             for i = 1:self.dominosTotal
 %                 self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
 %             end
-
-            for i = 1:self.dominosTotal
-                
-            end
-            
             
             while (1)
                % Sim running. Loop while flag condition is true 
