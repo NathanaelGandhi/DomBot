@@ -1,6 +1,7 @@
 function teachCartesian(robot)
 %TEACHCARTESIAN Jog the robot using Cartesian coordinates
     %-------------------------------
+    handles.callback = [];
     % parameters for teach panel
     handles.robot=robot;
     handles.bgcol=[103 233 98]/255;  % background color
@@ -42,38 +43,38 @@ function teach_callback(src, name, j, handles)
             set(handles.slider(j), 'Value', newval);
     end
     
+    % Get the euler angles
+    euler = tr2eul(handles.T6);
+    
     % Assign the relevant joint with the updated value
     switch(j)
-            case {1,2,3}
-                modifier=j;
-                sliderType = 4;
-            case 4
-                modifier=1;
-                sliderType = 3;
-            case 5
-                modifier=2;
-                sliderType = 3;
-            case 6
-                modifier=3;
-                sliderType = 3;
+        case {1,2,3}
+            % Got XYZ position just update
+            handles.T6(j,4) = newval;
+        case {4,5,6}
+            % Got a euler angle in degrees
+            euler(j-3) = deg2rad(newval);
     end
-    handles.T6(modifier,sliderType) = newval;
-
-    % find all graphical objects tagged with the robot name, this is the
-    % instancs of that robot across all figures
-    h = findobj('Tag', name);
-    % find the graphical element of this name
-    if isempty(h)
-        error('RTB:teach:badarg', 'No graphical robot of this name found');
-    end
-    % get the info from its Userdata
-    info = get(h(1), 'UserData');
     
     % Generate new transform
     transform = transl(handles.T6(1,4),handles.T6(2,4),handles.T6(3,4)) ...
-        * trotx(deg2rad(handles.T6(1,3))) ...
-        * troty(deg2rad(handles.T6(2,3))) ...
-        * trotz(deg2rad(handles.T6(3,3)));
+        * trotx(euler(1)) ...
+        * troty(euler(2)) ...
+        * trotz(euler(3));
+    
+%     % find all graphical objects tagged with the robot name, this is the
+%     % instancs of that robot across all figures
+%     h = findobj('Tag', name);
+%     % find the graphical element of this name
+%     if isempty(h)
+%         error('RTB:teach:badarg', 'No graphical robot of this name found');
+%     end
+%     % get the info from its Userdata
+%     info = get(h(1), 'UserData');
+    
+
+    
+
     
     % Compute joint angles for new pose
     CalculateTraj(handles.robot, transform, 1)      % self, Transform, steps
@@ -81,40 +82,35 @@ function teach_callback(src, name, j, handles)
     % Move the robot 1 step
     RunTraj(handles.robot)                       % self, increment
     
-    % update the stored joint coordinates
-    info.q = handles.robot.qCurrent;
-
-    % and save it back to the graphical object
-    set(h(1), 'UserData', info);
+    % recompute the robot tool pose - Update robot state
+    handles.T6 = handles.robot.model.fkine(handles.robot.qCurrent);
     
-    % recompute the robot tool pose
-    handles.T6 = handles.robot.model.fkine(info.q);
+%     % update the stored joint coordinates
+%     info.q = handles.robot.qCurrent;
+% 
+%     % and save it back to the graphical object
+%     set(h(1), 'UserData', info);
     
     % Update all sliders and edit boxes
     n = size(handles.sliderLabels,2);
     for k=1:n
         switch(k)
             case {1,2,3}
-                modifier=k;
-                sliderType = 4;
-            case 4
-                modifier=1;
-                sliderType = 3;
-            case 5
-                modifier=2;
-                sliderType = 3;
-            case 6
-                modifier=3;
-                sliderType = 3;
+                % Get XYZ positions
+                val = handles.T6(k,4);
+            case {4,5,6}
+                % Get the euler angles
+                euler = tr2eul(handles.T6);
+                val = rad2deg(euler(k-3));  % Convert angle to degrees
         end
         if(k==j)
             % We have already updated this, dont do anything
         else
             % Update all other sliders
             % reflect it to edit box
-            set(handles.edit(k), 'String', num2str(handles.T6(modifier,sliderType), 3));
+            set(handles.edit(k), 'String', num2str(val, 3));
             % reflect it to slider
-            set(handles.slider(k), 'Value', handles.T6(modifier,sliderType));
+            set(handles.slider(k), 'Value', val);
         end
     end
     
@@ -145,9 +141,9 @@ function teach_callback(src, name, j, handles)
 %         set(handles.t6.r(i), 'String', sprintf('%.3f', orient(i)));
 %     end
 %     
-%     if ~isempty(handles.callback)
-%         handles.callback(handles.robot, info.q);
-%     end
+    if ~isempty(handles.callback)
+        handles.callback(handles, info.q);
+    end
 %     
 %     %notify(handles.robot, 'Moved');
 
@@ -218,24 +214,19 @@ function handles = MakeSliders(handles)
         % slider itself
         switch(j)
             case {1,2,3}
-                modifier=j;
-                sliderType = 4;
-            case 4
-                modifier=1;
-                sliderType = 3;
-            case 5
-                modifier=2;
-                sliderType = 3;
-            case 6
-                modifier=3;
-                sliderType = 3;
+                % Get XYZ positions
+                val = handles.T6(j,4);
+            case {4,5,6}
+                % Get the euler angles
+                euler = tr2eul(handles.T6);
+                val = rad2deg(euler(j-3));
         end
         handles.slider(j) = uicontrol(handles.panel, 'Style', 'slider', ...
             'Units', 'normalized', ...
             'Position', [0.15 handles.height*(n-j+2) 0.65 handles.height], ...
             'Min', handles.sliderLimits(j,1), ...
             'Max', handles.sliderLimits(j,2), ...
-            'Value', handles.T6(modifier,sliderType), ...
+            'Value', val, ...
             'Tag', sprintf('Slider%d', j));
         
         % text box showing slider value, also editable
@@ -243,7 +234,7 @@ function handles = MakeSliders(handles)
             'Units', 'normalized', ...
             'Position', [0.80 handles.height*(n-j+2)+.01 0.20 0.9*handles.height], ...
             'BackgroundColor', handles.bgcol, ...
-            'String', num2str(handles.T6(modifier,sliderType), 3), ...
+            'String', num2str(val, 3), ...
             'HorizontalAlignment', 'left', ...
             'FontUnits', 'normalized', ...
             'FontSize', 0.4, ...
