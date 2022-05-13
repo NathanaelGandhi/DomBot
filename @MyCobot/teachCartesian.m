@@ -163,7 +163,7 @@ function teach_callback(src, name, j, handles)
     end
     
     % Get the euler angles
-    euler = tr2eul(handles.T6);
+    euler = tr2rpy(handles.T6);
     
     % Assign the relevant joint with the updated value
     switch(j)
@@ -190,8 +190,8 @@ function teach_callback(src, name, j, handles)
     end
     
     % recompute the robot tool pose - Update robot state
-%     handles.T6 = handles.robot.model.fkine(handles.robot.qCurrent);
-    handles.T6 = handles.robot.endEffectorPose;
+    handles.T6 = handles.robot.model.fkine(handles.robot.qCurrent);
+%     handles.T6 = handles.robot.endEffectorPose;
     
     % Update all sliders and edit boxes
     n = size(handles.sliderLabels,2);
@@ -203,7 +203,7 @@ function teach_callback(src, name, j, handles)
                 val = handles.T6(k,4);
             case {4,5,6}
                 % Get the euler angles
-                euler = tr2eul(handles.T6);
+                euler = tr2rpy(handles.T6);
                 val = rad2deg(euler(k-3));  % Convert angle to degrees
         end
         % reflect it to edit box
@@ -299,7 +299,7 @@ function handles = MakeSliders(handles)
                 val = handles.T6(j,4);
             case {4,5,6}
                 % Get the euler angles
-                euler = tr2eul(handles.T6);
+                euler = tr2rpy(handles.T6);
                 val = rad2deg(euler(j-3));
         end
         handles.slider(j) = uicontrol(handles.panel, 'Style', 'slider', ...
