@@ -1,249 +1,303 @@
-function teachCartesian(robot)
+function teachCartesian(self)
 %TEACHCARTESIAN Jog the robot using Cartesian coordinates
     %-------------------------------
     % parameters for teach panel
-    handles.robot=robot;
-    handles.bgcol=[103 233 98]/255;  % background color
-    handles.height = 0.06;  % height of slider rows
+    self.tc.bgcol=[103 233 98]/255;  % background color
+    self.tc.height = 0.06;  % height of slider rows
     % Slider properties
-    handles.sliderLabels = ['X','Y','Z',char(hex2dec('3c6')),char(hex2dec('3b8')),char(hex2dec('3c8'))];
-    handles.sliderLimits = [... 
-        -handles.robot.radiusOfMotion, handles.robot.radiusOfMotion; ...
-        -handles.robot.radiusOfMotion, handles.robot.radiusOfMotion; ...
-        handles.robot.pose(3,4), handles.robot.pose(3,4)+0.412; ...         %0.411 appears to be max simulated reach
-        -1, 361; ...     & Degrees with +/-1 for overshoot
-        -1, 361; ...
-        -1, 361]; 
+    self.tc.sliderLabels = ['X','Y','Z','R', 'P', 'Y'];
+    
+    sliderTollerance = 0.05;    % 5cm tollerance
+    self.tc.sliderLimits = [... 
+        -self.radiusOfMotion-sliderTollerance, self.radiusOfMotion+sliderTollerance; ...
+        -self.radiusOfMotion-sliderTollerance, self.radiusOfMotion+sliderTollerance; ...
+        self.pose(3,4), self.pose(3,4)+0.411+sliderTollerance; ...  %0.411 appears to be max simulated reach
+        -181, 181; ...     & Degrees with +/-1 for overshoot
+        -181, 181; ...
+        -181, 181]; 
     %-------------------------------
-    handles = InstallThePanel(handles);
-    handles = SetQlimToFinite(handles);
-    handles = GetCurrentRobotState(handles);
-    handles = MakeSliders(handles);
-    handles = AddExitButton(handles);
-    handles = AssignCallbacks(handles);
+    InstallThePanel(self);
+    CheckQlim(self);
+    GetEndEffectorTransform(self);
+    MakeSliders(self);
+    CreatePositionDisplay(self);
+    CreateOrientationDisplay(self);
+    AddExitButton(self);
+    AssignCallbacks(self);
 end
 
-%% ---- VALUES ARE NOT BEING PASSED BACK FROM CALLBACK - THIS HAS UNINTENDED RESULTS WHEN JOGGING MULTIPLE AXES
-function teach_callback(src, name, j, handles)
+function teach_callback(src, self, j)
     % called on changes to a slider or to the edit box showing joint coordinate
     % src      = the object that caused the event
     % name     = name of the robot
     % j        = the index concerned (1..N)
+    steps = 1;
     
-    % Update the slider/edit box
+    % Get the updated value
     switch get(src, 'Style')
         case 'slider'
-            % slider changed, get value and reflect it to edit box
+            % slider changed, get value
             newval = get(src, 'Value');
-            set(handles.edit(j), 'String', num2str(newval, 3));
         case 'edit'
-            % edit box changed, get value and reflect it to slider
+            % edit box changed, get value
             newval = str2double(get(src, 'String'));
-            set(handles.slider(j), 'Value', newval);
     end
     
-    % Assign the relevant joint with the updated value
+    GetEndEffectorTransform(self);
+    
+    % Get the angles
+    angles = tr2rpy(self.tc.T6);                        % Radians
+    
+    % Assign the relevant updated value
     switch(j)
-            case {1,2,3}
-                modifier=j;
-                sliderType = 4;
-            case 4
-                modifier=1;
-                sliderType = 3;
-            case 5
-                modifier=2;
-                sliderType = 3;
-            case 6
-                modifier=3;
-                sliderType = 3;
+        case {1,2,3}
+            % Got XYZ position just update
+            self.tc.T6(j,4) = newval;
+        case {4,5,6}
+            % Got an angle in radians
+            newval = deg2rad(newval);
+            angles(j-3) = newval;              % Radians
     end
-    handles.T6(modifier,sliderType) = newval;
-
-    % find all graphical objects tagged with the robot name, this is the
-    % instancs of that robot across all figures
-    h = findobj('Tag', name);
-    % find the graphical element of this name
-    if isempty(h)
-        error('RTB:teach:badarg', 'No graphical robot of this name found');
-    end
-    % get the info from its Userdata
-    info = get(h(1), 'UserData');
     
-    % Generate new transform
-    transform = transl(handles.T6(1,4),handles.T6(2,4),handles.T6(3,4)) ...
-        * trotx(deg2rad(handles.T6(1,3))) ...
-        * troty(deg2rad(handles.T6(2,3))) ...
-        * trotz(deg2rad(handles.T6(3,3)));
-    
+    % Generate new end effector transform
+    self.tc.T6 = transl(self.tc.T6(1,4),self.tc.T6(2,4),self.tc.T6(3,4)) ...
+        * rpy2tr(angles);                     % Radians
+   
     % Compute joint angles for new pose
-    CalculateTraj(handles.robot, transform, 1)      % self, Transform, steps
+    CalculateTraj(self, self.tc.T6, steps)      % self, Transform, steps
     
-    % Move the robot 1 step
-    RunTraj(handles.robot, 1)                       % self, increment
+    for i=1:steps
+        % Move the robot 1 step
+        RunTraj(self)                           % self, increment
+    end
     
-    % update the stored joint coordinates
-    info.q = handles.robot.qCurrent;
-
-    % and save it back to the graphical object
-    set(h(1), 'UserData', info);
+    % Update (recompute) the robot tool pose
+    GetEndEffectorTransform(self);
     
     % Update all sliders and edit boxes
-    % recompute the robot tool pose
-    handles.T6 = handles.robot.model.fkine(info.q);
-    
-    n = size(handles.sliderLabels,2);
+    n = size(self.tc.sliderLabels,2);
     for k=1:n
+        angles = tr2rpy(self.tc.T6);
+        % Check if XYZ or Angle
         switch(k)
             case {1,2,3}
-                modifier=k;
-                sliderType = 4;
-            case 4
-                modifier=1;
-                sliderType = 3;
-            case 5
-                modifier=2;
-                sliderType = 3;
-            case 6
-                modifier=3;
-                sliderType = 3;
-        end
-        if(k==j)
-            % We have already updated this, dont do anything
-        else
-            % Update all other sliders
-            % reflect it to edit box
-            set(handles.edit(k), 'String', num2str(handles.T6(modifier,sliderType), 3));
-            % reflect it to slider
-            set(handles.slider(k), 'Value', handles.T6(modifier,sliderType));
+                % Get XYZ positions
+                val = self.tc.T6(k,4);
+                % reflect it to edit box
+                set(self.tc.edit(k), 'String', num2str(val, 3));
+                % reflect it to slider
+                set(self.tc.slider(k), 'Value', val);          % Degrees
+            case {4,5,6}
+                % Get the angles
+                val = angles(k-3);  
+                % reflect it to edit box
+                set(self.tc.edit(k), 'String', num2str(rad2deg(val), 3));
+                % reflect it to slider
+                set(self.tc.slider(k), 'Value', rad2deg(val));          % Degrees
         end
     end
     
-
-
-    
-%     
-%     % update all robots of this name
-%     handles.robot.model.animate(handles.robot, info.q);
-%     
-%     
-%     % compute the robot tool pose
-%     T6 = handles.robot.fkine(info.q);
-%     
-%     % convert orientation to desired format
-%     switch handles.orientation
-%         case 'approach'
-%             orient = T6(:,3);    % approach vector
-%         case 'eul'
-%             orient = tr2eul(T6, 'setopt', handles.opt);
-%         case'rpy'
-%             orient = tr2rpy(T6, 'setopt', handles.opt);
-%     end
-%     
-%     % update the display in the teach window
-%     for i=1:3
-%         set(handles.t6.t(i), 'String', sprintf('%.3f', T6(i,4)));
-%         set(handles.t6.r(i), 'String', sprintf('%.3f', orient(i)));
-%     end
-%     
-%     if ~isempty(handles.callback)
-%         handles.callback(handles.robot, info.q);
-%     end
-%     
-%     %notify(handles.robot, 'Moved');
-
+    % update the display in the teach window
+    for i=1:3
+        set(self.tc.t6.t(i), 'String', sprintf('%.3f', self.tc.T6(i,4)));
+        set(self.tc.t6.r(i), 'String', sprintf('%.3f', rad2deg(angles(i))));    % Degrees
+    end
 end
 
-function handles = AssignCallbacks(handles)
+function AssignCallbacks(self)
     %---- now assign the callbacks
-    n = size(handles.sliderLabels,2);
+    n = size(self.tc.sliderLabels,2);
     for j=1:n
         % text edit box
-        set(handles.edit(j), ...
+        set(self.tc.edit(j), ...
             'Interruptible', 'off', ...
-            'Callback', @(src,event)teach_callback(src, handles.robot.model.name, j, handles));
+            'Callback', @(src,event)teach_callback(src, self, j));
         
         % slider
-        set(handles.slider(j), ...
+        set(self.tc.slider(j), ...
             'Interruptible', 'off', ...
             'BusyAction', 'queue', ...
-            'Callback', @(src,event)teach_callback(src, handles.robot.model.name, j, handles));
+            'Callback', @(src,event)teach_callback(src, self, j));
     end
 end
 
-function resize_callback(handles)
+function resize_callback(self)
     % come here on figure resize events
     fig = gcbo;   % this figure (whose callback is executing)
     fs = get(fig, 'Position');  % get size of figure
-    ps = get(handles.panel, 'Position');  % get position of the panel
+    ps = get(self.tc.panel, 'Position');  % get position of the panel
     % update dimensions of the axis area
-    set(handles.curax, 'Units', 'pixels', ...
+    set(self.tc.curax, 'Units', 'pixels', ...
         'OuterPosition', [ps(3) 0 fs(3)-ps(3) fs(4)]);
     % keep the panel anchored to the top left corner
-    set(handles.panel, 'Position', [1 fs(4)-ps(4) ps(3:4)]);
+    set(self.tc.panel, 'Position', [1 fs(4)-ps(4) ps(3:4)]);
 end
 
-function quit_callback(handles)
-    set(handles.fig, 'ResizeFcn', '');
-    delete(handles.panel);
-    set(handles.curax, 'Units', 'Normalized', 'OuterPosition', [0 0 1 1])
+function quit_callback(self)
+    set(self.tc.fig, 'ResizeFcn', '');
+    delete(self.tc.panel);
+    set(self.tc.curax, 'Units', 'Normalized', 'OuterPosition', [0 0 1 1])
 end
 
-function handles = AddExitButton(handles)
+function AddExitButton(self)
     %---- add buttons
-    uicontrol(handles.panel, 'Style', 'pushbutton', ...
+    uicontrol(self.tc.panel, 'Style', 'pushbutton', ...
         'Units', 'normalized', ...
-        'Position', [0.80 handles.height*(0)+.01 0.15 handles.height], ...
+        'Position', [0.80 self.tc.height*(0)+.01 0.15 self.tc.height], ...
         'FontUnits', 'normalized', ...
         'FontSize', 0.7, ...
-        'CallBack', @(src,event) quit_callback(handles), ...
+        'CallBack', @(src,event) quit_callback(self), ...
         'BackgroundColor', 'white', ...
         'ForegroundColor', 'red', ...
         'String', 'X');
 end
 
-function handles = MakeSliders(handles)
+function CreateOrientationDisplay(self)
+ %---- set up the orientation display box
+    % R
+    uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'BackgroundColor', self.tc.bgcol, ...
+        'Position', [0.05 1-5*self.tc.height 0.2 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.9, ...
+        'HorizontalAlignment', 'left', ...
+        'String', self.tc.sliderLabels(4));
+    
+    self.tc.t6.r(1) = uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'Position', [0.3 1-5*self.tc.height 0.6 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.8, ...
+        'String', sprintf('%.3f', rad2deg(self.tc.T6(1,3))));    % Degrees
+    
+    % P
+    uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'BackgroundColor', self.tc.bgcol, ...
+        'Position', [0.05 1-6*self.tc.height 0.2 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.9, ...
+        'HorizontalAlignment', 'left', ...
+        'String', self.tc.sliderLabels(5));
+    
+    self.tc.t6.r(2) = uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'Position', [0.3 1-6*self.tc.height 0.6 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.8, ...
+        'String', sprintf('%.3f', rad2deg(self.tc.T6(2,3))));    % Degrees
+    
+    % Y
+    uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'BackgroundColor', self.tc.bgcol, ...
+        'Position', [0.05 1-7*self.tc.height 0.2 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.9, ...
+        'HorizontalAlignment', 'left', ...
+        'String', self.tc.sliderLabels(6));
+    
+    self.tc.t6.r(3) = uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'Position', [0.3 1-7*self.tc.height 0.6 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.8, ...
+        'String', sprintf('%.3f', rad2deg(self.tc.T6(3,3))));    % Degrees 
+end
+
+function CreatePositionDisplay(self)
+    %---- set up the position display box 
+    % X
+    uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'BackgroundColor', self.tc.bgcol, ...
+        'Position', [0.05 1-self.tc.height 0.2 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.9, ...
+        'HorizontalAlignment', 'left', ...
+        'String', 'x:');
+    
+    self.tc.t6.t(1) = uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'Position', [0.3 1-self.tc.height 0.6 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.8, ...
+        'String', sprintf('%.3f', self.tc.T6(1,4)), ...
+        'Tag', 'T6');
+    
+    % Y
+    uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'BackgroundColor', self.tc.bgcol, ...
+        'Position', [0.05 1-2*self.tc.height 0.2 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.9, ...
+        'HorizontalAlignment', 'left', ...
+        'String', 'y:');
+    
+    self.tc.t6.t(2) = uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'Position', [0.3 1-2*self.tc.height 0.6 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.8, ...
+        'String', sprintf('%.3f', self.tc.T6(2,4)));
+    
+    % Z
+    uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'BackgroundColor', self.tc.bgcol, ...
+        'Position', [0.05 1-3*self.tc.height 0.2 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.9, ...
+        'HorizontalAlignment', 'left', ...
+        'String', 'z:');
+    
+    self.tc.t6.t(3) = uicontrol(self.tc.panel, 'Style', 'text', ...
+        'Units', 'normalized', ...
+        'Position', [0.3 1-3*self.tc.height 0.6 self.tc.height], ...
+        'FontUnits', 'normalized', ...
+        'FontSize', 0.8, ...
+        'String', sprintf('%.3f', self.tc.T6(3,4)));
+end
+
+function MakeSliders(self)
     %---- sliders
     % Create the sliders
-    n = size(handles.sliderLabels,2);
+    n = size(self.tc.sliderLabels,2);
     for j=1:n
         % slider label
-        uicontrol(handles.panel, 'Style', 'text', ...
+        uicontrol(self.tc.panel, 'Style', 'text', ...
             'Units', 'normalized', ...
-            'BackgroundColor', handles.bgcol, ...
-            'Position', [0 handles.height*(n-j+2) 0.15 handles.height], ...
+            'BackgroundColor', self.tc.bgcol, ...
+            'Position', [0 self.tc.height*(n-j+2) 0.15 self.tc.height], ...
             'FontUnits', 'normalized', ...
             'FontSize', 0.5, ...
-            'String', sprintf(handles.sliderLabels(:,j)));
+            'String', sprintf(self.tc.sliderLabels(:,j)));
         
         % slider itself
         switch(j)
             case {1,2,3}
-                modifier=j;
-                sliderType = 4;
-            case 4
-                modifier=1;
-                sliderType = 3;
-            case 5
-                modifier=2;
-                sliderType = 3;
-            case 6
-                modifier=3;
-                sliderType = 3;
+                % Get XYZ positions
+                val = self.tc.T6(j,4);
+            case {4,5,6}
+                % Get the angles                    % Degrees
+                val = rad2deg(self.tc.T6(j-3,3));
         end
-        handles.slider(j) = uicontrol(handles.panel, 'Style', 'slider', ...
+        self.tc.slider(j) = uicontrol(self.tc.panel, 'Style', 'slider', ...
             'Units', 'normalized', ...
-            'Position', [0.15 handles.height*(n-j+2) 0.65 handles.height], ...
-            'Min', handles.sliderLimits(j,1), ...
-            'Max', handles.sliderLimits(j,2), ...
-            'Value', handles.T6(modifier,sliderType), ...
+            'Position', [0.15 self.tc.height*(n-j+2) 0.55 self.tc.height], ...
+            'Min', self.tc.sliderLimits(j,1), ...
+            'Max', self.tc.sliderLimits(j,2), ...
+            'Value', val, ...
             'Tag', sprintf('Slider%d', j));
         
         % text box showing slider value, also editable
-        handles.edit(j) = uicontrol(handles.panel, 'Style', 'edit', ...
+        self.tc.edit(j) = uicontrol(self.tc.panel, 'Style', 'edit', ...
             'Units', 'normalized', ...
-            'Position', [0.80 handles.height*(n-j+2)+.01 0.20 0.9*handles.height], ...
-            'BackgroundColor', handles.bgcol, ...
-            'String', num2str(handles.T6(modifier,sliderType), 3), ...
+            'Position', [0.70 self.tc.height*(n-j+2)+.01 0.30 0.9*self.tc.height], ...
+            'BackgroundColor', self.tc.bgcol, ...
+            'String', num2str(val, 3), ...
             'HorizontalAlignment', 'left', ...
             'FontUnits', 'normalized', ...
             'FontSize', 0.4, ...
@@ -251,46 +305,29 @@ function handles = MakeSliders(handles)
     end
 end
 
-function handles = GetCurrentRobotState(handles)
+function GetEndEffectorTransform(self)
     %---- get the current robot state
-    if isempty(handles.q)
-        % check to see if there are any graphical robots of this name
-        rhandles = findobj('Tag', handles.robot.model.name);
-        % find the graphical element of this name
-        if isempty(rhandles)
-            error('RTB:teach:badarg', 'No graphical robot of this name found');
-        end
-        % get the info from its Userdata
-        info = get(rhandles(1), 'UserData');
-        % the handle contains current joint angles (set by plot)
-        if ~isempty(info.q)
-            handles.q = info.q;
-        end
-    else
-    handles.robot.model.plot(handles.q);
-    end
-    handles.T6 = handles.robot.model.fkine(handles.q);
+    self.tc.T6 = self.myFkine(self.qCurrent);
 end
 
-function handles = SetQlimToFinite(handles)
+function CheckQlim(self)
     % we need to have qlim set to finite values for a prismatic joint
-    qlim = handles.robot.model.qlim;
+    qlim = self.model.qlim;
     if any(isinf(qlim))
         error('RTB:teach:badarg', 'Must define joint coordinate limits for prismatic axes, set qlim properties for prismatic Links');
     end
-    handles.q = [];
 end
 
-function handles = InstallThePanel(handles)
+function InstallThePanel(self)
     %---- install the panel at the side of the figure
     % find the right figure to put it in
-    c = findobj(gca, 'Tag', handles.robot.model.name);      % check the current axes
+    c = findobj(gca, 'Tag', self.model.name);      % check the current axes
     if isempty(c)
         % doesn't exist in current axes, look wider
-        c = findobj(0, 'Tag', handles.robot.model.name);    % check all figures
+        c = findobj(0, 'Tag', self.model.name);    % check all figures
         if isempty(c)
             % create robot in arbitrary pose
-            handles.robot.model.plot( zeros(1, handles.robot.model.n) );
+            self.model.plot( zeros(1, self.model.n) );
             ax = gca;
         else
             ax = get(c(1), 'Parent');               % get first axis holding the robot
@@ -299,22 +336,21 @@ function handles = InstallThePanel(handles)
         % found it in current axes
         ax = gca;
     end
-    handles.fig = get(ax, 'Parent');                % get the figure that holds the axis
+    self.tc.fig = get(ax, 'Parent');                % get the figure that holds the axis
     
     % shrink the current axes to make room
     %   [l b w h]
     set(ax, 'OuterPosition', [0.25 0 0.70 1])
     
-    handles.curax = ax;
+    self.tc.curax = ax;
     
     % create the panel itself
-    panel = uipanel(handles.fig, ...
+    self.tc.panel = uipanel(self.tc.fig, ...
         'Title', 'Teach Cartesian', ...
-        'BackGroundColor', handles.bgcol,...
+        'BackGroundColor', self.tc.bgcol,...
         'Position', [0 0 .25 1]);
-    set(panel, 'Units', 'pixels'); % stop automatic resizing
-    handles.panel = panel;
-    set(handles.fig, 'Units', 'pixels');
-    set(handles.fig, 'ResizeFcn', @(src,event) resize_callback(handles));
+    set(self.tc.panel, 'Units', 'pixels'); % stop automatic resizing
+    set(self.tc.fig, 'Units', 'pixels');
+    set(self.tc.fig, 'ResizeFcn', @(src,event) resize_callback(self));
 end
 
