@@ -208,16 +208,26 @@ classdef Simulation < handle
             
             % Test to verify correct goal pose calculation (plots dominoes
             % in goal poses)
+%             for i = 1:self.dominosTotal
+%                 self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
+%             end
+
             for i = 1:self.dominosTotal
-                self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
+                
             end
             
             
-            while (self.simRunning)
+            while (1)
                % Sim running. Loop while flag condition is true 
-               if (self.simRunning)
+               if (self.simEStop)
                    pause(1);
-                    self.logObj.LogDebug('[SIM] Sim Running');    
+                   self.logObj.LogDebug('[SIM] Sim E-stopped');
+                   continue
+               elseif (self.simRunning)
+                   pause(1);
+                   self.logObj.LogDebug('[SIM] Sim Running'); 
+               elseif (self.simRunning == 0)
+                   break;
                end
             end
              self.logObj.LogInfo('[SIM] Simulation Stopped');
@@ -245,16 +255,16 @@ classdef Simulation < handle
             
             % Set the domino path based on user input
             if pathInput == self.CIRCLE
-                self.pathType = pathInput
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt
+                self.pathType = pathInput;
+                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
                 self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt; %% EndPt will equal startPT for circle
             elseif pathInput == self.SEMICIRCLE
-                self.pathType = pathInput
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt
+                self.pathType = pathInput;
+                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
                 self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt;
             elseif pathInput == self.LINE
-                self.pathType = pathInput
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt
+                self.pathType = pathInput;
+                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
                 self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt;
             else %ERROR
                 self.logObj.LogInfo('[SIM] ERROR - Domino path not specified');
