@@ -9,8 +9,8 @@ classdef Simulation < handle
         
         % Path properties
         pathType;               % Domino path type (Circle, line or semicircle)
-        pathStartPt;            % 4x4 transform start point for domino path
-        pathEndPt;              % 4x4 transform end point for domino path
+        pathStartPt;            % 4x4 transform start point for domino path (world frame)
+        pathEndPt;              % 4x4 transform end point for domino path (world frame)
         
     end
     % Const Vars
@@ -223,16 +223,16 @@ classdef Simulation < handle
             
             % Set the domino path based on user input
             if pathInput == self.CIRCLE
-                self.pathType = pathInput;
-                self.pathStartPt = startPt;
+                self.pathType = self.envObjList{self.MYCOBOT}{1}.model.base * pathInput;
+                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
                 self.pathEndPt = endPt; %% EndPt will equal startPT for circle
             elseif pathInput == self.SEMICIRCLE
-                self.pathType = pathInput;
-                self.pathStartPt = startPt;
+                self.pathType = self.envObjList{self.MYCOBOT}{1}.model.base * pathInput;
+                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
                 self.pathEndPt = endPt;
             elseif pathInput == self.LINE
-                self.pathType = pathInput;
-                self.pathStartPt = startPt;
+                self.pathType = self.envObjList{self.MYCOBOT}{1}.model.base * pathInput;
+                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
                 self.pathEndPt = endPt;
             else %ERROR
                 self.logObj.LogInfo('[SIM] ERROR - Domino path not specified');
@@ -258,7 +258,30 @@ classdef Simulation < handle
             % Determine domino goal poses using stored data
             if self.pathType == self.CIRCLE
                 % Set a path around the robot with the specified startPt
-                %pathRadius = self.pathStartPt
+                
+                % Determine radius as distance from startPt to robot base
+                pathRadius = hypot(self.pathStartPt(13),self.pathStartPt(14));
+                
+                % Determine distance around circle for each domino
+                goalTransIncrement = (2*pi*pathRadius)/self.dominoesTotal;
+                
+                % Determine the increment 
+                goalAngleIncrement = 360/self.dominoesTotal;
+                
+                % Set the transform for the first domino (in world frame)
+                pathTF = self.pathStartPt;
+                
+                % Add goal poses to dominoes (in world frame)
+                for i = 1:self.dominosTotal
+                    
+                    % Set the goal pose of the current domino
+                    self.envObjList{self.DOMINO}{i}.model.desiredPose = pathTF;
+                    
+                    % Determine the goal pose of the next domino
+                    pathTF = pathTF * transl(goalTransIncrement, 0, 0) * ...
+                        trotz(deg2rad(goalAngleIncrement));
+                    
+                end
                 
             elseif self.pathType == self.SEMICIRCLE
                 % Empty for now
