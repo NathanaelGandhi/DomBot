@@ -26,7 +26,7 @@ classdef Simulation < handle
         ROBOTREACH = 0.28;       %280 mm range of motion from MyCobot manual
         ROBOTBASERADIUS = 0.05;  % Exclusion radius for robot base
         DOMINOMAX = 15;             % Max no. of dominoes for path generation
-        DOMINOMIN = 75;             % Min no. of dominoes for path generation
+        DOMINOMIN = 45;             % Min no. of dominoes for path generation
         
         % Domino path constants
         CIRCLE = 1;
@@ -261,7 +261,9 @@ classdef Simulation < handle
             if (pathInput == self.CIRCLE || pathInput == self.SEMICIRCLE)
                 % Automatically scale radius based on domino number
                 radiusArray = [self.DOMINOMIN, self.dominosTotal, self.DOMINOMAX];
-                mappedArray = (radiusArray-min(radiusArray))*(self.ROBOTREACH-2*self.ROBOTBASERADIUS)/(max(radiusArray)-min(radiusArray)) + 2*self.ROBOTBASERADIUS;
+                mappedArray = (radiusArray-min(radiusArray))* ...
+                    (self.ROBOTREACH-2*self.ROBOTBASERADIUS)/...
+                    (max(radiusArray)-min(radiusArray)) + 2*self.ROBOTBASERADIUS;
                 
                 % Start point for circle is located on the x axis => y=0
                 pathX = mappedArray(2);
@@ -271,7 +273,7 @@ classdef Simulation < handle
                 if (pathInput == self.CIRCLE)
                     endPt = startPt;
                 else
-                    endPt = transl(-1*path,0,0);
+                    endPt = transl(-1*pathX,0,0);
                 end
             
             % Straight Line Path
@@ -306,17 +308,29 @@ classdef Simulation < handle
             self.logObj.LogInfo('[SIM] Calculating Domino Poses');
             
             % Determine domino goal poses using stored data
-            if self.pathType == self.CIRCLE
-                % Set a path around the robot with the specified startPt
-                
+            % Set a circle or semicircle path around the robot with the specified startPt
+            if (self.pathType == self.CIRCLE || self.pathType == self.SEMICIRCLE)
                 % Determine radius as distance from startPt to robot base
                 pathRadius = hypot(self.pathStartPt(13),self.pathStartPt(14));
                 
-                % Determine distance around circle for each domino
+                % Determine distance around circle or semicircle for each domino
                 goalTransIncrement = (2*pi*pathRadius)/self.dominosTotal;
                 
-                % Determine the increment 
-                goalAngleIncrement = 360/self.dominosTotal;
+                % Set the angle and increment for the circle or semicircle
+                if (self.pathType == self.SEMICIRCLE)
+                    % Determine distance around semicircle for each domino
+                    goalTransIncrement = (pi*pathRadius)/self.dominosTotal;
+                    % Semicircle angle
+                    angleTotal = 180;
+                else
+                    % Determine distance around circle for each domino
+                    goalTransIncrement = (2*pi*pathRadius)/self.dominosTotal;
+                    % Circle total angle
+                    angleTotal = 360;
+                end
+                
+                % Determine the angle increment for each domino
+                goalAngleIncrement = angleTotal/self.dominosTotal;
                 
                 % Set the transform for the first domino (in world frame)
                 pathTF = self.pathStartPt * transl(0, 0, self.envObjList{self.DOMINO}{1}.dominoZOffset);
@@ -334,11 +348,8 @@ classdef Simulation < handle
                     
                 end
                 
-            elseif self.pathType == self.SEMICIRCLE
-                % Empty for now
+            elseif (self.pathType == self.LINE)
                 
-            elseif self.pathType == self.LINE
-                % Empty for now
                 
             else % ERROR
                 self.logObj.LogInfo('[SIM] ERROR - Domino path not set');
