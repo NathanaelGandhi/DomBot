@@ -4,7 +4,7 @@ classdef Simulation < handle
         logObj;         % Log object
         simRunning;     % Flag for simulation desired state
         envObjList;
-        dominosTotal;
+        dominosTotal;   % Total No. of dominoes
         simEStop;       % Flag for simulation E-Stop
         
         % Path properties
@@ -25,6 +25,8 @@ classdef Simulation < handle
         STOPSIGN = 7;
         ROBOTREACH = 0.28;       %280 mm range of motion from MyCobot manual
         ROBOTBASERADIUS = 0.05;  % Exclusion radius for robot base
+        DOMINOMAX = 15;             % Max no. of dominoes for path generation
+        DOMINOMIN = 75;             % Min no. of dominoes for path generation
         
         % Domino path constants
         CIRCLE = 1;
@@ -191,13 +193,9 @@ classdef Simulation < handle
         end
         
         %% Function to run simulation "main" loop
-        function SetUpSim(self)
-            % TEST - set start point for path (in robot base frame)
-            startPoint = transl(0.2,0,0);
-            endPoint = startPoint;
-            
+        function SetUpSim(self)     
             % Set path for dominoes
-            SetDominoPath(self, self.CIRCLE, startPoint, endPoint);
+            SetDominoPath(self, self.CIRCLE);
             
             % Set goal poses for each domino
             GenerateDominoGoalPoses(self);
@@ -212,22 +210,8 @@ classdef Simulation < handle
         %% Function to run simulation "main" loop
         function RunSim(self)
             % UPDATE REQIUIRED - changes made for video
+            SetUpSim(self);
             
-%             % TEST - set start point for path (in robot base frame)
-%             startPoint = transl(0.2,0,0);
-%             endPoint = startPoint;
-%             
-%             % Set path for dominoes
-%             SetDominoPath(self, self.CIRCLE, startPoint, endPoint);
-%             
-%             % Set goal poses for each domino
-%             GenerateDominoGoalPoses(self);
-            
-            % Test to verify correct goal pose calculation (plots dominoes
-            % in goal poses)
-%             for i = 1:self.dominosTotal
-%                 self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
-%             end
             
             while (self.simRunning)
                % Sim running. Loop while flag condition is true 
@@ -258,36 +242,51 @@ classdef Simulation < handle
         end
         
         %% Function to set desired domino path
-        function SetDominoPath(self, pathInput, startPt, endPt)
+        function SetDominoPath(self, pathInput)
             % UPDATE REQUIRED
-            % - If, elseif statement used as further modification will
-            % require this later on. 
             % - Program does not check for path validity of the line,
             % meaning that it can pass through the robot base.
             % - Function will only work with one robot, and requires
             % modification if intending to implement more robots.
             
             % NOTE - Path inputs are specified from the robots base frame
-            
             % Log the sim state
             self.logObj.LogInfo('[SIM] Setting Domino Path');
             
+            % Set the path type
+            self.pathType = pathInput;
+            
             % Set the domino path based on user input
-            if pathInput == self.CIRCLE
-                self.pathType = pathInput;
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
-                self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt; %% EndPt will equal startPT for circle
-            elseif pathInput == self.SEMICIRCLE
-                self.pathType = pathInput;
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
-                self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt;
-            elseif pathInput == self.LINE
-                self.pathType = pathInput;
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
-                self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt;
+            % Circle or semicircle path
+            if (pathInput == self.CIRCLE || pathInput == self.SEMICIRCLE)
+                % Automatically scale radius based on domino number
+                radiusArray = [self.DOMINOMIN, self.dominosTotal, self.DOMINOMAX];
+                mappedArray = (radiusArray-min(radiusArray))*(self.ROBOTREACH-2*self.ROBOTBASERADIUS)/(max(radiusArray)-min(radiusArray)) + 2*self.ROBOTBASERADIUS;
+                
+                % Start point for circle is located on the x axis => y=0
+                pathX = mappedArray(2);
+                
+                % Set start and end point for circle or semicircle
+                startPt = transl(pathX,0,0);
+                if (pathInput == self.CIRCLE)
+                    endPt = startPt;
+                else
+                    endPt = transl(-1*path,0,0);
+                end
+            
+            % Straight Line Path
+            elseif (pathInput == self.LINE)
+                
+                startPt = transl(0,0,0);
+                endPt = tranls(0,0,0);
+                
             else %ERROR
                 self.logObj.LogInfo('[SIM] ERROR - Domino path not specified');
             end
+            
+            % Set the start and end pts for the path
+            self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
+            self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt;
         end
         
         %% Function to generate goal domino poses
