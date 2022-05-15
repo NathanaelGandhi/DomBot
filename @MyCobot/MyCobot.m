@@ -8,6 +8,7 @@ classdef MyCobot < EnvironmentObject
         rangeOfMotionPlot;
         
         % Variables for calculating trajectory (RMRC)
+%         qCurrent = [pi/4, pi/8, 0, -pi/8, pi/8, 0];  % Current joint angles
         qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
         deltaT = 0.05;                          % Discrete time step
@@ -213,7 +214,12 @@ classdef MyCobot < EnvironmentObject
             angleError(:,i) = deltaTheta; % For plotting
         end
         end
-        
+        %% calculate quintic polynomial trajectory (to work with RunTraj)
+        function JTraJ(self, transform, steps)
+            self.qMatrix = jtraj(self.model.getpos, transform, steps)
+            
+            
+        end
         %% runs trajectory (with RMRC)
         function RunTraj(self)
             % Should be placed in a for loop with the same number of steps

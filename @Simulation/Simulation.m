@@ -11,7 +11,13 @@ classdef Simulation < handle
         pathType;               % Domino path type (Circle, line or semicircle)
         pathStartPt;            % 4x4 transform start point for domino path (world frame)
         pathEndPt;              % 4x4 transform end point for domino path (world frame)
-        currentStep;            % Value for current trajectory steps
+        
+        
+        % Domino Collection properties
+        robotState;             % State of the arm (picking up domino, going home, etc)
+        dominoCurrent;          % Current domino being targeted by the robot
+        stepsTotal;             % Total steps for robot movement
+        stepsCurrent;           % Current steps for robot
         
     end
     % Const Vars
@@ -32,6 +38,11 @@ classdef Simulation < handle
         CIRCLE = 1;
         SEMICIRCLE = 2;
         LINE = 3;
+        
+        % Robot Movement Constants
+        PICKINGUP = 1;
+        DROPPINGOFF = 2;
+        GOHOME = 3;
     end
     
     methods
@@ -194,7 +205,8 @@ classdef Simulation < handle
         
         %% Function to run simulation "main" loop
         function SetUpSim(self)     
-            % Set path for dominoes
+            % Set path for dominoes - change CIRCLE to SEMICIRCLE or LINE
+            % for other paths - LINE does not work right now
             SetDominoPath(self, self.CIRCLE);
             
             % Set goal poses for each domino
@@ -202,21 +214,52 @@ classdef Simulation < handle
             
             % TEST - Verify correct goal pose calculation (plots dominoes
             % in goal poses)
-            for i = 1:self.dominosTotal
-                self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
-            end
+%             for i = 1:self.dominosTotal
+%                 self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
+%             end
         end
         
         %% Function to run simulation "main" loop
         function RunSim(self)
-            % UPDATE REQIUIRED - changes made for video
+            % UPDATE REQUIRED - changes made for video
             SetUpSim(self);
             
+            self.dominoCurrent = 1;
+            self.robotState = 1;
+            self.stepsTotal = 150;
+            self.stepsCurrent = 1;
             
+%             self.envObjList{self.MYCOBOT}{1}.CalculateTraj(transl(0.28, 0.06, 0.175 + 1), self.stepsTotal);
+            q = self.envObjList{self.MYCOBOT}{1}.model.ikcon(self.envObjList{self.DOMINO}{1}.pose, ...
+                self.envObjList{self.MYCOBOT}{1}.model.getpos);
+            self.envObjList{self.MYCOBOT}{1}.JTraJ(q, self.stepsTotal);
+            
+            for i=1:self.stepsTotal
+                % Runs trajectory that was just calculated
+                self.envObjList{self.MYCOBOT}{1}.RunTraj();
+            end
+            
+%             self.envObjList{self.MYCOBOT}{1}.CalculateTraj(transl(0.06, 0.28, 0.294 + 1), self.stepsTotal);
+            q = self.envObjList{self.MYCOBOT}{1}.model.ikcon(self.envObjList{self.DOMINO}{1}.desiredPose, ...
+                self.envObjList{self.MYCOBOT}{1}.model.getpos);
+            self.envObjList{self.MYCOBOT}{1}.JTraJ(q, self.stepsTotal);
+            
+            for i=1:self.stepsTotal
+                % Runs trajectory that was just calculated
+                self.envObjList{self.MYCOBOT}{1}.RunTraj();
+            end
+            
+            self.logObj.LogDebug('[SIM] Sim Running');
             while (self.simRunning)
                % Sim running. Loop while flag condition is true 
+               
+%                if self.stepsCurrent < self.stepsTotal
+%                    self.envObjList{self.MYCOBOT}{1}.RunTraj();
+%                    self.stepsCurrent = self.stepsCurrent + 1;
+%                end
+               
                if (self.simRunning)
-                   pause(1);
+                   pause(0.01);
                    self.logObj.LogDebug('[SIM] Sim Running'); 
                elseif (self.simRunning == 0)
                    self.logObj.LogDebug('[SIM] Sim E-Stopped');
@@ -278,6 +321,8 @@ classdef Simulation < handle
             
             % Straight Line Path
             elseif (pathInput == self.LINE)
+                
+                %INCOMPLETE
                 
                 startPt = transl(0,0,0);
                 endPt = tranls(0,0,0);
@@ -349,7 +394,7 @@ classdef Simulation < handle
                 end
                 
             elseif (self.pathType == self.LINE)
-                
+                % INCOMPLETE
                 
             else % ERROR
                 self.logObj.LogInfo('[SIM] ERROR - Domino path not set');
