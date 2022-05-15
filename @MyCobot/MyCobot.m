@@ -8,7 +8,6 @@ classdef MyCobot < EnvironmentObject
         rangeOfMotionPlot;
         
         % Variables for calculating trajectory (RMRC)
-%         qCurrent = [pi/4, pi/8, 0, -pi/8, pi/8, 0];  % Current joint angles
         qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
         deltaT = 0.05;                          % Discrete time step
@@ -49,12 +48,18 @@ classdef MyCobot < EnvironmentObject
             L(5).offset = pi;
             
             %limits
-            L(1).qlim = (pi/180)*[-165 165];
-            L(2).qlim = (pi/180)*[-165 165];
-            L(3).qlim = (pi/180)*[-165 165];
-            L(4).qlim = (pi/180)*[-165 165];
-            L(5).qlim = (pi/180)*[-165 165];
-            L(6).qlim = (pi/180)*[-175 175];
+%             L(1).qlim = (pi/180)*[-165 165];
+%             L(2).qlim = (pi/180)*[-165 165];
+%             L(3).qlim = (pi/180)*[-165 165];
+%             L(4).qlim = (pi/180)*[-165 165];
+%             L(5).qlim = (pi/180)*[-165 165];
+%             L(6).qlim = (pi/180)*[-175 175];
+            L(1).qlim = (pi/180)*[-225 225];
+            L(2).qlim = (pi/180)*[-225 225];
+            L(3).qlim = (pi/180)*[-225 225];
+            L(4).qlim = (pi/180)*[-225 225];
+            L(5).qlim = (pi/180)*[-225 225];
+            L(6).qlim = (pi/180)*[-360 360];
             
             model = SerialLink(L, 'name', name);
         end
@@ -216,7 +221,7 @@ classdef MyCobot < EnvironmentObject
         end
         %% calculate quintic polynomial trajectory (to work with RunTraj)
         function JTraJ(self, transform, steps)
-            self.qMatrix = jtraj(self.model.getpos, transform, steps)
+            self.qMatrix = jtraj(self.model.getpos, transform, steps);
             
             
         end
