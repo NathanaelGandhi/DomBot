@@ -44,7 +44,8 @@ classdef MyCobot < EnvironmentObject
             
             %offset
             L(2).offset = pi/2;
-            L(4).offset = -pi/2;
+            L(3).offset = -pi/5;
+            L(4).offset = -pi/2 + pi/5;
             L(5).offset = pi;
             
             %limits
@@ -175,10 +176,19 @@ classdef MyCobot < EnvironmentObject
         s = lspb(0,1,steps);               % Trapezoidal trajectory scalar
         for i=1:steps
             x(:,i) = (1-s(i))*Ti(1:3, 4)+s(i)*Tf(1:3,4);
-            %theta(:,i) = (1-s(i))*tr2rpy(Ti)+s(i)*tr2rpy(Tf);
+            
+            %% Theta options
+            % OPTION 1: End effector rotation is not changed
             theta(:,i) = tr2rpy(trotx(0));
+            
+            % OPTION 2: End effector rotation changes to inputted tramsform
+            % theta(:,i) = (1-s(i))*tr2rpy(Ti)+s(i)*tr2rpy(Tf);            
         end
-        self.qMatrix(1,:) = self.model.ikcon(Tf,self.qCurrent);
+        % Sets first step of qMatrix
+        TFirstStep = rpy2tr(theta(:,1)');
+        TFirstStep(1:3,4) = x(:,1);
+        self.qMatrix(1,:) = self.model.ikcon(TFirstStep,self.qCurrent);
+        
         for i=1:steps-1
             T = self.myFkine(self.qMatrix(i,:));
             deltaX = x(:,i+1) - T(1:3, 4);      % Get position error from next waypoint
@@ -222,7 +232,7 @@ classdef MyCobot < EnvironmentObject
             self.qMatrix(1,:) = [];
             self.model.animate(self.qCurrent);
             self.cam.T = self.myFkine(self.qCurrent)*trotx(pi);
-            drawnow;
+            drawnow
         end
         
         %% Function to start "teach classic"
