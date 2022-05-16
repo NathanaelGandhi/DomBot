@@ -19,7 +19,7 @@ classdef Simulation < handle
         dominoCurrent;          % Current domino being targeted by the robot
         dominoFlag;             % Flag for if robot is holding domino
         targetPose;             % Target pose of the robot
-        stepsTotal;             % Total steps for robot movement
+        
         stepsCurrent;           % Current steps for robot
         
     end
@@ -32,8 +32,8 @@ classdef Simulation < handle
         EXTINGUISHER = 5;
         DOMINO = 6;
         STOPSIGN = 7;
-        ROBOTREACH = 0.25;       %280 mm range of motion from MyCobot manual
-        ROBOTBASERADIUS = 0.20;  % Exclusion radius for robot base
+        ROBOTREACH = 0.28;       %280 mm range of motion from MyCobot manual
+        ROBOTBASERADIUS = 0.15;  % Exclusion radius for robot base
         DOMINOMAX = 15;             % Max no. of dominoes for path generation
         DOMINOMIN = 45;             % Min no. of dominoes for path generation
         
@@ -48,6 +48,7 @@ classdef Simulation < handle
         DOMINOPOSE = 2;
         HOMEPOSE = 3;
         RUNNING = 4;
+        STANDBY = 5;
         
         % myCobot Constants
         ROBOTHOME = [0, -pi/8, -pi/2, pi/8, -pi/2, 0];  % Home Pose
@@ -55,6 +56,7 @@ classdef Simulation < handle
         ROBOTHOVER = [0, -pi/4, -pi/3, pi/8, -pi/2, 0]; % TEMP
         ROBOTHOVEROFFSET = 0.07;                        % Offset from top of domino for hover pose
         ROBOTEEOFFSET = 0.05;                           % Offset of EE to Domino
+        STEPSTOTAL = 50;                                % Total steps for robot movement
         
         % Domino States
         FREE = 0;
@@ -225,26 +227,21 @@ classdef Simulation < handle
         function SetUpSim(self)     
             % Set path for dominoes - change CIRCLE to SEMICIRCLE or LINE
             % for other paths - LINE does not work right now
-            SetDominoPath(self, self.SEMICIRCLE);
+            SetDominoPath(self, self.CIRCLE);
             
             % Set goal poses for each domino
             GenerateDominoGoalPoses(self);
             
+            % LEAVE IN FOR TRAVIS DEBUG
             % TEST - Verify correct goal pose calculation (plots dominoes
             % in goal poses)
 %             for i = 1:self.dominosTotal
 %                 self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
 %             end
             
-            % Reset all dominoes to be free
-            for i = 1:self.dominosTotal
-                self.envObjList{self.DOMINO}{i}.dominoState = self.FREE;
-            end
-
             % Set up robot movement parameters
             self.dominoCurrent = 1;                 % Set the current domino at 1
-            self.robotState = self.HOMEPOSE;        % Set the current pose to go to home
-            self.stepsTotal = 50;                   % Set total steps for paths
+            self.robotState = self.HOMEPOSE;        % Set the current state to go to home
             self.stepsCurrent = 0;                  % Current step is 0, iterated when running
             self.dominoFlag = self.FREE;            % Robot is not holding a domino
         end
@@ -289,7 +286,7 @@ classdef Simulation < handle
                 case self.HOMEPOSE
                     if self.envObjList{self.DOMINO}{1}.dominoState == self.FREE
                         % Determine the trajectory to the home pose
-                        self.envObjList{self.MYCOBOT}{1}.JTraJ(self.ROBOTHOME, self.stepsTotal);
+                        self.envObjList{self.MYCOBOT}{1}.JTraJ(self.ROBOTHOME, self.STEPSTOTAL);
                         % Set the program to run and record last state
                         % self.oldState = self.prevState; - not needed here
                         self.prevState = self.robotState;
@@ -297,10 +294,9 @@ classdef Simulation < handle
                         self.logObj.LogInfo('[SIM] Going to Home');
                     else
                         % Determine the trajectory to the standby pose
-                        self.envObjList{self.MYCOBOT}{1}.JTraJ(self.ROBOTSTANDBY, self.stepsTotal);
+                        self.envObjList{self.MYCOBOT}{1}.JTraJ(self.ROBOTSTANDBY, self.STEPSTOTAL);
                         % Set the program to run and record last state
-                        self.oldState = self.prevState;
-                        self.prevState = self.robotState;
+                        self.prevState = self.STANDBY;
                         self.robotState = self.RUNNING;
                         self.logObj.LogInfo('[SIM] Going to standby');
                         % Needs a way to be 'turned off'
@@ -319,13 +315,13 @@ classdef Simulation < handle
                         self.logObj.LogInfo('[SIM] Hovering - above goal');
                     end
                     % Determine estimate for ikcon
-                    estPose = self.ROBOTHOVER;
-                    estPose(1) = atan2(pose(14), pose(13));
+                    estimatePose = self.ROBOTHOVER;
+                    estimatePose(1) = atan2(pose(14), pose(13));
                     % Determine the joint angles for the current pose
                     qGoal = self.envObjList{self.MYCOBOT}{1}.model.ikcon(pose * transl(0,0,self.ROBOTEEOFFSET + self.ROBOTHOVEROFFSET), ...
-                        estPose);
+                        estimatePose);
                     % Determine the trajectory to the home pose
-                    self.envObjList{self.MYCOBOT}{1}.JTraJ(qGoal, self.stepsTotal);
+                    self.envObjList{self.MYCOBOT}{1}.JTraJ(qGoal, self.STEPSTOTAL);
                     % Set the program to run and record last stated
                     self.oldState = self.prevState;
                     self.prevState = self.robotState;
@@ -347,7 +343,7 @@ classdef Simulation < handle
                     qGoal = self.envObjList{self.MYCOBOT}{1}.model.ikcon(pose * transl(0,0,self.ROBOTEEOFFSET), ...
                         self.envObjList{self.MYCOBOT}{1}.model.getpos);
                     % Determine the trajectory to the home pose
-                    self.envObjList{self.MYCOBOT}{1}.JTraJ(qGoal, self.stepsTotal);
+                    self.envObjList{self.MYCOBOT}{1}.JTraJ(qGoal, self.STEPSTOTAL);
                     % Set the program to run and record last stated
                     self.oldState = self.prevState;
                     self.prevState = self.robotState;
@@ -371,7 +367,7 @@ classdef Simulation < handle
                     
                     % If max steps reached, the move is completed - go to next
                     % step in the state machine
-                    if self.stepsCurrent == self.stepsTotal
+                    if self.stepsCurrent == self.STEPSTOTAL
                         
                         % Reset step count
                         self.stepsCurrent = 0;
@@ -403,43 +399,24 @@ classdef Simulation < handle
                         elseif (self.prevState == self.HOVERPOSE && self.oldState == self.HOVERPOSE)
                             self.robotState = self.DOMINOPOSE;
                             
+                        elseif (self.prevState == self.STANDBY)
+                            self.robotState = self.STANDBY;
                         else
                             self.logObj.LogInfo('[SIM] ERROR');
                             
                         end
                     end
+                case self.STANDBY
+                    self.dominoCurrent = 1;                 % Set the current domino at 1
+                    self.stepsCurrent = 0;                  % Current step is 0, iterated when running
+                    self.dominoFlag = self.FREE;            % Robot is not holding a domino
+                    
             end
             
         end
         
         %% Function to run simulation "main" loop
         function RunSim(self)
-            % TEMP - set up simulation - needs to be moved to the GUI code
-            SetUpSim(self);
-            
-            % Old method for movement - for reference only
-            % self.envObjList{self.MYCOBOT}{1}.CalculateTraj(transl(0.06, 0.28, 0.294 + 1), self.stepsTotal);
-                           
-%             % Test code for JTraJ function           
-%             q = self.envObjList{self.MYCOBOT}{1}.model.ikcon(self.envObjList{self.DOMINO}{1}.pose, ...
-%                 self.envObjList{self.MYCOBOT}{1}.model.getpos);
-%             self.envObjList{self.MYCOBOT}{1}.JTraJ(q, self.stepsTotal);
-%             
-%             for i=1:self.stepsTotal
-%                 % Runs trajectory that was just calculated
-%                 self.envObjList{self.MYCOBOT}{1}.RunTraj();
-%             end
-%             
-% 
-%             q = self.envObjList{self.MYCOBOT}{1}.model.ikcon(self.envObjList{self.DOMINO}{1}.desiredPose, ...
-%                 self.envObjList{self.MYCOBOT}{1}.model.getpos);
-%             self.envObjList{self.MYCOBOT}{1}.JTraJ(q, self.stepsTotal);
-%             
-%             for i=1:self.stepsTotal
-%                 % Runs trajectory that was just calculated
-%                 self.envObjList{self.MYCOBOT}{1}.RunTraj();
-%             end
-            
             % Main loop for code - runs the robot unless e-stopped
             while (self.simRunning)
                % Run robot state machine
