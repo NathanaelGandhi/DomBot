@@ -8,7 +8,7 @@ classdef MyCobot < EnvironmentObject
         rangeOfMotionPlot;
         
         % Variables for calculating trajectory (RMRC)
-        qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
+        qCurrent = [0, 0, -pi/5, -pi/2 + pi/5, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
         deltaT = 0.05;                          % Discrete time step
         W = diag([1 1 1 0.1 0.1 0.1]);          % Weighting matrix for the velocity vector
@@ -44,8 +44,7 @@ classdef MyCobot < EnvironmentObject
             
             %offset
             L(2).offset = pi/2;
-            L(3).offset = -pi/5;
-            L(4).offset = -pi/2 + pi/5;
+            L(4).offset = -pi/2;
             L(5).offset = pi;
             
             %limits
@@ -91,7 +90,7 @@ classdef MyCobot < EnvironmentObject
         function cam = GetCamera(self)
             cam = CentralCamera('focal', 0.08, 'pixel', 10e-5, ...
             'resolution', [1024 1024], 'centre', [512 512],'name', 'MyCobotCamera');
-            cam.T = self.myFkine(self.qCurrent)*trotx(pi);
+            cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
         end
         
         
@@ -231,7 +230,7 @@ classdef MyCobot < EnvironmentObject
             self.qCurrent = self.qMatrix(1,:);
             self.qMatrix(1,:) = [];
             self.model.animate(self.qCurrent);
-            self.cam.T = self.myFkine(self.qCurrent)*trotx(pi);
+            self.cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
             drawnow
         end
         
