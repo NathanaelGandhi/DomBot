@@ -173,16 +173,17 @@ classdef MyCobot < EnvironmentObject
         % Calculates trapizoidal trajectory of end effector position
         Ti = self.myFkine(self.qCurrent);   % Transform of current end effector position
         Tf = Transform;                         % Transform of final end effector position
-        s = lspb(0,1,steps);               % Trapezoidal trajectory scalar
+        if steps == 1
+            s = 1;
+        else
+            s = lspb(0,1,steps);               % Trapezoidal trajectory scalar
+        end
         for i=1:steps
             x(:,i) = (1-s(i))*Ti(1:3, 4)+s(i)*Tf(1:3,4);
             
-            %% Theta options
-            % OPTION 1: End effector rotation is not changed
-            theta(:,i) = tr2rpy(trotx(0));
-            
-            % OPTION 2: End effector rotation changes to inputted tramsform
-            % theta(:,i) = (1-s(i))*tr2rpy(Ti)+s(i)*tr2rpy(Tf);            
+           
+            % End effector rotation changes to inputted tramsform
+            theta(:,i) = (1-s(i))*tr2rpy(Ti)+s(i)*tr2rpy(Tf);            
         end
         % Sets first step of qMatrix
         TFirstStep = rpy2tr(theta(:,1)');

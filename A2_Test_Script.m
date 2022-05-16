@@ -7,8 +7,9 @@ dombot = MyCobot(cobotLog, 2, tempPose);
 %% CalculateTraj and RunTraj Tests
 steps = 50;
 % nextPose = transl(0.2, 0.1, 0.1);
-nextPose2 = transl(0.073, 0.066, 0.294);   % Default spawn pose
+nextPose2 = transl(0.073, 0.28, 0.175);   % Default spawn pose
 nextPose1 = transl(0.28, 0.066, 0.175);  % MAX X
+
 % nextPose2 = transl(0.066, 0.28, 0.175); % MAX Y
 
 while(1)
@@ -23,6 +24,7 @@ while(1)
     for i=1:steps
         dombot.RunTraj();
     end
+    
 end
 
 %% Notes

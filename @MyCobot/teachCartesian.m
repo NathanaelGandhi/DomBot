@@ -65,7 +65,7 @@ function teach_callback(src, self, j)
    
     % Compute joint angles for new pose
     CalculateTraj(self, self.tc.T6, steps)      % self, Transform, steps
-    
+    %self.qMatrix = self.model.ikcon(self.tc.T6, self.qCurrent);
     for i=1:steps
         % Move the robot 1 step
         RunTraj(self)                           % self, increment
