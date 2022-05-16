@@ -309,7 +309,7 @@ classdef Simulation < handle
                 % Plan path for hovering over domino current or goal pose
                 case self.HOVERPOSE
                     % Set the hover pose - either goal or current
-                    if (self.prevState == self.DOMINOPOSE || self.prevState == self.THINKING)                       % dominoFlag == self.OCCUPIED
+                    if (self.prevState == self.DOMINOPOSE || self.prevState == self.THINKING)
                         pose = self.envObjList{self.DOMINO}...
                         {self.dominoCurrent}.pose;
                         self.logObj.LogInfo('[SIM] Hovering - above current');

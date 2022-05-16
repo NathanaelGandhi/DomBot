@@ -54,12 +54,6 @@ classdef MyCobot < EnvironmentObject
             L(4).qlim = (pi/180)*[-165 165];
             L(5).qlim = (pi/180)*[-165 165];
             L(6).qlim = (pi/180)*[-175 175];
-%             L(1).qlim = (pi/180)*[-200 200];
-%             L(2).qlim = (pi/180)*[-200 200];
-%             L(3).qlim = (pi/180)*[-200 200];
-%             L(4).qlim = (pi/180)*[-200 200];
-%             L(5).qlim = (pi/180)*[-200 200];
-%             L(6).qlim = (pi/180)*[-200 200];
             
             model = SerialLink(L, 'name', name);
         end
