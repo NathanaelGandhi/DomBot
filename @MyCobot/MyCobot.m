@@ -11,7 +11,7 @@ classdef MyCobot < EnvironmentObject
         qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
         cameraPoints;                   % Array of generated camera points
-        cam;                            % Camera variables - NEEDS BETTER NAMING!
+        cameraObj;                      % Camera object created from CentralCamera class
     end
     
     % Const Vars
@@ -68,7 +68,7 @@ classdef MyCobot < EnvironmentObject
             self = self@EnvironmentObject(logArg, id, pose, 'mycobot');
             self.workspace = self.SetMyCobotWorkspace();
             self.model = self.GetMyCobotRobot();
-            self.cam = self.GetCamera();
+            self.cameraObj = self.GetCamera();
             self.PlotAndColourRobot();                      % robot,workspace);
         end
         
@@ -88,10 +88,10 @@ classdef MyCobot < EnvironmentObject
         end
         
         %% Create camera for visual servoing
-        function cam = GetCamera(self)
-            cam = CentralCamera('focal', 0.08, 'pixel', 10e-5, ...
+        function cameraObj = GetCamera(self)
+            cameraObj = CentralCamera('focal', 0.08, 'pixel', 10e-5, ...
             'resolution', [1024 1024], 'centre', [512 512],'name', 'MyCobotCamera');
-            cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
+            cameraObj.T = self.model.fkine(self.qCurrent)*trotx(pi);
         end
         
         
@@ -231,7 +231,7 @@ classdef MyCobot < EnvironmentObject
             self.qCurrent = self.qMatrix(1,:);
             self.qMatrix(1,:) = [];
             self.model.animate(self.qCurrent);
-            self.cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
+            self.cameraObj.T = self.model.fkine(self.qCurrent)*trotx(pi);
             drawnow
         end
         
