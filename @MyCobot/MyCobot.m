@@ -12,8 +12,10 @@ classdef MyCobot < EnvironmentObject
         qMatrix;                                % Array of joint angles
         cam;                            % Camera variables - NEEDS BETTER NAMING!
         cam_h;                          % Cam plot - THIS THE HANDLE OR A PLOT?
-        
-        % Const vars
+    end
+    
+    % Const Vars
+    properties(Constant)
         RADIUS_REACH = 0.286;           %280 mm range of motion from MyCobot manual 
         DELTA_T = 0.05;                 % Discrete time step - Calculating trajectory (RMRC)
         W = diag([1 1 1 0.1 0.1 0.1]);  % Weighting matrix for the velocity vector - Calculating trajectory (RMRC)
