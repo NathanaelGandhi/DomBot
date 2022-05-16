@@ -4,7 +4,7 @@ classdef MyCobot < EnvironmentObject
         model;  % MyCobot handle
         tc;     % Teach Cartesian handle
         workspace;
-        radiusOfMotion = 0.286; %280 mm range of motion from MyCobot manual 
+        RADIUSREACH = 0.286; %280 mm range of motion from MyCobot manual 
         rangeOfMotionPlot;
         
         % Variables for calculating trajectory (RMRC)
@@ -135,7 +135,7 @@ classdef MyCobot < EnvironmentObject
         function baseRange(self)
             zz = 0.13156 + self.model.base(3, 4);
             for i = -165:10: 165
-                for j = 0:0.05:self.radiusOfMotion
+                for j = 0:0.05:self.RADIUSREACH
                     xx = j*sin(i*pi/180)+ self.model.base(1, 4);
                     yy = j*cos(i*pi/180) + self.model.base(2, 4);
                     self.rangeOfMotionPlot = plot3(xx,yy,zz, '.','Color','g','MarkerSize',10);
@@ -146,9 +146,9 @@ classdef MyCobot < EnvironmentObject
         function fullRange(self)
             for i = -180:10: 180
                 for j = 0:10:70
-                    xx = self.radiusOfMotion*sin(i*pi/180)*cos(j*pi/180)+ self.model.base(1, 4);
-                    yy = self.radiusOfMotion*cos(i*pi/180)*cos(j*pi/180)+ self.model.base(2, 4);
-                    zz = self.radiusOfMotion*sin(j*pi/180) + 0.13156 + self.model.base(3, 4);
+                    xx = self.RADIUSREACH*sin(i*pi/180)*cos(j*pi/180)+ self.model.base(1, 4);
+                    yy = self.RADIUSREACH*cos(i*pi/180)*cos(j*pi/180)+ self.model.base(2, 4);
+                    zz = self.RADIUSREACH*sin(j*pi/180) + 0.13156 + self.model.base(3, 4);
                     plot3(xx,yy,zz, '.','Color','b','MarkerSize',10);
                 end
             end
