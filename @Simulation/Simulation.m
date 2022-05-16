@@ -225,7 +225,7 @@ classdef Simulation < handle
         function SetUpSim(self)     
             % Set path for dominoes - change CIRCLE to SEMICIRCLE or LINE
             % for other paths - LINE does not work right now
-            SetDominoPath(self, self.CIRCLE);
+            SetDominoPath(self, self.SEMICIRCLE);
             
             % Set goal poses for each domino
             GenerateDominoGoalPoses(self);
@@ -321,8 +321,6 @@ classdef Simulation < handle
                     % Determine estimate for ikcon
                     estPose = self.ROBOTHOVER;
                     estPose(1) = atan2(pose(14), pose(13));
-%                     rot = tr2rpy(pose);
-%                     estPose(6) = rot(3);
                     % Determine the joint angles for the current pose
                     qGoal = self.envObjList{self.MYCOBOT}{1}.model.ikcon(pose * transl(0,0,self.ROBOTEEOFFSET + self.ROBOTHOVEROFFSET), ...
                         estPose);
