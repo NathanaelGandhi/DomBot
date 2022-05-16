@@ -2,27 +2,26 @@ classdef Simulation < handle
     % Vars
     properties
         logObj;         % Log object
+        objList;        % List of objects
         simRunning;     % Flag for simulation desired state
-        objList;
-        dominosTotal;   % Total No. of dominoes
         simEStop;       % Flag for simulation E-Stop
+        dominosTotal;   % Total No. of dominoes
+        stepsCurrent;   % Current steps for robot
         
         % Path properties
-        pathType;               % Domino path type (Circle, line or semicircle)
-        pathStartPt;            % 4x4 transform start point for domino path (world frame)
-        pathEndPt;              % 4x4 transform end point for domino path (world frame)
+        pathType;       % Domino path type (Circle, line or semicircle)
+        pathStartPt;    % 4x4 transform start point for domino path (world frame)
+        pathEndPt;      % 4x4 transform end point for domino path (world frame)
         
         % Domino Collection properties
-        robotState;             % State of the arm (picking up domino, going home, etc)
-        prevState;              % Previous state of the arm
-        oldState;               % 2nd previous state of arm
-        dominoCurrent;          % Current domino being targeted by the robot
-        dominoFlag;             % Flag for if robot is holding domino
-        targetPose;             % Target pose of the robot
-        
-        stepsCurrent;           % Current steps for robot
-        
+        dominoFlag;     % Flag for if robot is holding domino
+        robotState;     % State of the arm (picking up domino, going home, etc)
+        prevState;      % Previous state of the arm
+        oldState;       % 2nd previous state of arm
+        dominoCurrent;  % Current domino being targeted by the robot
+        targetPose;     % Target pose of the robot
     end
+    
     % Const Vars
     properties(Constant)
         GENERIC = 1;
