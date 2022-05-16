@@ -108,7 +108,8 @@ classdef MyCobot < EnvironmentObject
             % Display robot
             self.logObj.LogDebug('[MyCobot] Display robot');
             self.model.base = self.pose;
-            self.model.plot3d(self.qCurrent,'noarrow','workspace',self.workspace);
+            self.model.plot3d(self.qCurrent,'noarrow','notiles');
+            %self.model.plot3d(self.qCurrent,'noarrow','workspace',self.workspace);  % Use this to enable tiles
             hold on
             if isempty(findobj(get(gca,'Children'),'Type','Light'))
                 camlight
