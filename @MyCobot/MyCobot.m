@@ -229,10 +229,10 @@ classdef MyCobot < EnvironmentObject
         function RunTraj(self)
             % Should be placed in a for loop with the same number of steps
             % that was calculated
-            self.qMatrix(1,:) = [];
             self.model.animate(self.qMatrix(1,:));
             self.qCurrent = self.qMatrix(1,:);
             self.cameraObj.T = self.model.fkine(self.qCurrent)*trotx(pi);
+            self.qMatrix(1,:) = [];
             drawnow
         end
         
