@@ -12,7 +12,6 @@ classdef MyCobot < EnvironmentObject
         qMatrix;                                % Array of joint angles
         cameraPoints;                   % Array of generated camera points
         cam;                            % Camera variables - NEEDS BETTER NAMING!
-        cam_h;                          % Cam plot - THIS THE HANDLE OR A PLOT?
     end
     
     % Const Vars
@@ -169,8 +168,6 @@ classdef MyCobot < EnvironmentObject
         qdot = zeros(steps,6);             % Array for joint velocities
         theta = zeros(3,steps);            % Array for roll-pitch-yaw angles
         x = zeros(3,steps);                % Array for x-y-z trajectory
-        positionError = zeros(3,steps);    % For plotting trajectory error
-        angleError = zeros(3,steps);       % For plotting trajectory error
         
         % Calculates trapizoidal trajectory of end effector position
         Ti = self.myFkine(self.qCurrent);   % Transform of current end effector position
