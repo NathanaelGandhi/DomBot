@@ -91,7 +91,7 @@ classdef MyCobot < EnvironmentObject
         function cam = GetCamera(self)
             cam = CentralCamera('focal', 0.08, 'pixel', 10e-5, ...
             'resolution', [1024 1024], 'centre', [512 512],'name', 'MyCobotCamera');
-            cam.T = self.myFkine(self.qCurrent)*trotx(pi);
+            cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
         end
         
         
@@ -177,10 +177,19 @@ classdef MyCobot < EnvironmentObject
         s = lspb(0,1,steps);               % Trapezoidal trajectory scalar
         for i=1:steps
             x(:,i) = (1-s(i))*Ti(1:3, 4)+s(i)*Tf(1:3,4);
-            %theta(:,i) = (1-s(i))*tr2rpy(Ti)+s(i)*tr2rpy(Tf);
+            
+            %% Theta options
+            % OPTION 1: End effector rotation is not changed
             theta(:,i) = tr2rpy(trotx(0));
+            
+            % OPTION 2: End effector rotation changes to inputted tramsform
+            % theta(:,i) = (1-s(i))*tr2rpy(Ti)+s(i)*tr2rpy(Tf);            
         end
-        self.qMatrix(1,:) = self.model.ikcon(Tf,self.qCurrent);
+        % Sets first step of qMatrix
+        TFirstStep = rpy2tr(theta(:,1)');
+        TFirstStep(1:3,4) = x(:,1);
+        self.qMatrix(1,:) = self.model.ikcon(TFirstStep,self.qCurrent);
+        
         for i=1:steps-1
             T = self.myFkine(self.qMatrix(i,:));
             deltaX = x(:,i+1) - T(1:3, 4);      % Get position error from next waypoint
@@ -191,10 +200,8 @@ classdef MyCobot < EnvironmentObject
             S = Rdot*Ra;                      % Skew symmetric! S(\omega)
             linear_velocity = (1/self.DELTA_T)*deltaX;
             angular_velocity = [S(3,2);S(1,3);S(2,1)];  % Check the structure of Skew Symmetric matrix! Extract the angular velocities. (see RMRC lectures)
-            deltaTheta = tr2rpy(Rd*Ra);% Convert rotation matrix to RPY angles
             xdot = self.W*[linear_velocity; angular_velocity];              % Calculate end-effector velocity to reach next waypoint.
             J = self.model.jacob0(self.qMatrix(i,:));                 % Get Jacobian at current joint state
-
             mu = sqrt(det(J*J'));
             if mu < self.EPSILON  % If manipulability is less than given threshold
                 lambda = (1-(mu/self.EPSILON)^2)*self.LAMBDA_MAX; % Damping coefficient (try scaling it)
@@ -211,8 +218,6 @@ classdef MyCobot < EnvironmentObject
                 end
             end
             self.qMatrix(i+1,:) = self.qMatrix(i,:) + self.DELTA_T*qdot(i,:); % Update next joint state based on joint velocities
-            positionError(:,i) = deltaX;  % For plotting
-            angleError(:,i) = heta; % For plotting
         end
         end
         %% calculate quintic polynomial trajectory (to work with RunTraj)
@@ -228,8 +233,8 @@ classdef MyCobot < EnvironmentObject
             self.qCurrent = self.qMatrix(1,:);
             self.qMatrix(1,:) = [];
             self.model.animate(self.qCurrent);
-            self.cam.T = self.myFkine(self.qCurrent)*trotx(pi);
-            drawnow;
+            self.cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
+            drawnow
         end
         
         %% Function to start "teach classic"
