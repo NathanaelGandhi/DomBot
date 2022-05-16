@@ -48,7 +48,7 @@ classdef MyCobot < EnvironmentObject
             L(5).offset = pi;
             
             %limits
-            L(1).qlim = (pi/180)*[-165 165];
+            L(1).qlim = (pi/180)*[-200 200];
             L(2).qlim = (pi/180)*[-165 165];
             L(3).qlim = (pi/180)*[-165 165];
             L(4).qlim = (pi/180)*[-165 165];
@@ -213,7 +213,12 @@ classdef MyCobot < EnvironmentObject
             angleError(:,i) = deltaTheta; % For plotting
         end
         end
-        
+        %% calculate quintic polynomial trajectory (to work with RunTraj)
+        function JTraJ(self, qGoal, steps)
+            self.qMatrix = jtraj(self.model.getpos, qGoal, steps);
+            
+            
+        end
         %% runs trajectory (with RMRC)
         function RunTraj(self)
             % Should be placed in a for loop with the same number of steps

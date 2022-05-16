@@ -8,7 +8,7 @@ classdef Domino < EnvironmentObject
         vertexCount;
         
         % State of Domino
-        domninoState;
+        dominoState;
     end
     
     methods %% Class for Domino simulation
