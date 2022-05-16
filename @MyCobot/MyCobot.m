@@ -1,25 +1,24 @@
 classdef MyCobot < EnvironmentObject
     %% Properties
     properties
+        % Handles
         model;  % MyCobot handle
         tc;     % Teach Cartesian handle
-        workspace;
-        RADIUS_REACH = 0.286; %280 mm range of motion from MyCobot manual 
-        rangeOfMotionPlot;
         
-        % Variables for calculating trajectory (RMRC)
+        % Vars
+        workspace;
+        rangeOfMotionPlot;
         qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
-        DELTA_T = 0.05;                          % Discrete time step
-        W = diag([1 1 1 0.1 0.1 0.1]);          % Weighting matrix for the velocity vector
+        cam;                            % Camera variables - NEEDS BETTER NAMING!
+        cam_h;                          % Cam plot - THIS THE HANDLE OR A PLOT?
         
-        % Damped Least Squares variables
-        EPSILON = 0.1;
-        LAMBDA_MAX = 5E-2;
-        
-        % Camera variables
-        cam;
-        cam_h;                                  % Cam plot
+        % Const vars
+        RADIUS_REACH = 0.286;           %280 mm range of motion from MyCobot manual 
+        DELTA_T = 0.05;                 % Discrete time step - Calculating trajectory (RMRC)
+        W = diag([1 1 1 0.1 0.1 0.1]);  % Weighting matrix for the velocity vector - Calculating trajectory (RMRC)
+        EPSILON = 0.1;                  % Damped Least Squares variables
+        LAMBDA_MAX = 5E-2;              % Damped Least Squares variables
     end
     
     
