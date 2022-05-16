@@ -77,7 +77,7 @@ classdef Simulation < handle
             extinguisherList = {};
             dominoList = {};
             stopSignList = {};
-            self.envObjList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList}
+            self.envObjList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList};
         end
         
         %Deconstructor
