@@ -1,25 +1,26 @@
 classdef MyCobot < EnvironmentObject
     %% Properties
     properties
+        % Handles
         model;  % MyCobot handle
         tc;     % Teach Cartesian handle
-        workspace;
-        radiusOfMotion = 0.286; %280 mm range of motion from MyCobot manual 
-        rangeOfMotionPlot;
         
-        % Variables for calculating trajectory (RMRC)
+        % Vars
+        workspace;
+        rangeOfMotionPlot;
         qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
-        deltaT = 0.05;                          % Discrete time step
-        W = diag([1 1 1 0.1 0.1 0.1]);          % Weighting matrix for the velocity vector
-        
-        % Damped Least Squares variables
-        epsilon = 0.1;
-        lambdaMax = 5E-2;
-        
-        % Camera variables
-        cam;
-        cam_h;                                  % Cam plot
+        cam;                            % Camera variables - NEEDS BETTER NAMING!
+        cam_h;                          % Cam plot - THIS THE HANDLE OR A PLOT?
+    end
+    
+    % Const Vars
+    properties(Constant)
+        RADIUS_REACH = 0.286;           %280 mm range of motion from MyCobot manual 
+        DELTA_T = 0.05;                 % Discrete time step - Calculating trajectory (RMRC)
+        W = diag([1 1 1 0.1 0.1 0.1]);  % Weighting matrix for the velocity vector - Calculating trajectory (RMRC)
+        EPSILON = 0.1;                  % Damped Least Squares variables
+        LAMBDA_MAX = 5E-2;              % Damped Least Squares variables
     end
     
     
@@ -48,7 +49,7 @@ classdef MyCobot < EnvironmentObject
             L(5).offset = pi;
             
             %limits
-            L(1).qlim = (pi/180)*[-165 165];
+            L(1).qlim = (pi/180)*[-200 200];
             L(2).qlim = (pi/180)*[-165 165];
             L(3).qlim = (pi/180)*[-165 165];
             L(4).qlim = (pi/180)*[-165 165];
@@ -107,7 +108,8 @@ classdef MyCobot < EnvironmentObject
             % Display robot
             self.logObj.LogDebug('[MyCobot] Display robot');
             self.model.base = self.pose;
-            self.model.plot3d(self.qCurrent,'noarrow','workspace',self.workspace);
+            self.model.plot3d(self.qCurrent,'noarrow','notiles');
+            %self.model.plot3d(self.qCurrent,'noarrow','workspace',self.workspace);  % Use this to enable tiles
             hold on
             if isempty(findobj(get(gca,'Children'),'Type','Light'))
                 camlight
@@ -135,7 +137,7 @@ classdef MyCobot < EnvironmentObject
         function baseRange(self)
             zz = 0.13156 + self.model.base(3, 4);
             for i = -165:10: 165
-                for j = 0:0.05:self.radiusOfMotion
+                for j = 0:0.05:self.RADIUS_REACH
                     xx = j*sin(i*pi/180)+ self.model.base(1, 4);
                     yy = j*cos(i*pi/180) + self.model.base(2, 4);
                     self.rangeOfMotionPlot = plot3(xx,yy,zz, '.','Color','g','MarkerSize',10);
@@ -146,9 +148,9 @@ classdef MyCobot < EnvironmentObject
         function fullRange(self)
             for i = -180:10: 180
                 for j = 0:10:70
-                    xx = self.radiusOfMotion*sin(i*pi/180)*cos(j*pi/180)+ self.model.base(1, 4);
-                    yy = self.radiusOfMotion*cos(i*pi/180)*cos(j*pi/180)+ self.model.base(2, 4);
-                    zz = self.radiusOfMotion*sin(j*pi/180) + 0.13156 + self.model.base(3, 4);
+                    xx = self.RADIUS_REACH*sin(i*pi/180)*cos(j*pi/180)+ self.model.base(1, 4);
+                    yy = self.RADIUS_REACH*cos(i*pi/180)*cos(j*pi/180)+ self.model.base(2, 4);
+                    zz = self.RADIUS_REACH*sin(j*pi/180) + 0.13156 + self.model.base(3, 4);
                     plot3(xx,yy,zz, '.','Color','b','MarkerSize',10);
                 end
             end
@@ -194,35 +196,40 @@ classdef MyCobot < EnvironmentObject
             Rd = rpy2r(theta(1,i+1),theta(2,i+1),theta(3,i+1));      % Get next RPY angles, convert to rotation matrix
             Ra = T(1:3, 1:3);                % Current end-effector rotation matrix
 
-            Rdot = (1/self.deltaT)*(Rd - Ra);       % Calculate rotation matrix error (see RMRC lectures)
+            Rdot = (1/self.DELTA_T)*(Rd - Ra);       % Calculate rotation matrix error (see RMRC lectures)
             S = Rdot*Ra;                      % Skew symmetric! S(\omega)
-            linear_velocity = (1/self.deltaT)*deltaX;
+            linear_velocity = (1/self.DELTA_T)*deltaX;
             angular_velocity = [S(3,2);S(1,3);S(2,1)];  % Check the structure of Skew Symmetric matrix! Extract the angular velocities. (see RMRC lectures)
             deltaTheta = tr2rpy(Rd*Ra);% Convert rotation matrix to RPY angles
             xdot = self.W*[linear_velocity; angular_velocity];              % Calculate end-effector velocity to reach next waypoint.
             J = self.model.jacob0(self.qMatrix(i,:));                 % Get Jacobian at current joint state
 
             mu = sqrt(det(J*J'));
-            if mu < self.epsilon  % If manipulability is less than given threshold
-                lambda = (1-(mu/self.epsilon)^2)*self.lambdaMax; % Damping coefficient (try scaling it)
+            if mu < self.EPSILON  % If manipulability is less than given threshold
+                lambda = (1-(mu/self.EPSILON)^2)*self.LAMBDA_MAX; % Damping coefficient (try scaling it)
             else
                 lambda = 0;
             end
             invJ = inv(J'*J+lambda*eye(6))*J'; % Apply Damped Least Squares pseudoinverse
             qdot(i,:) = (invJ*xdot)'; % Solve the RMRC equation (you may need to transpose the         vector)
             for j = 1:6 % Loop through joints 1 to 6
-                if qdot(i,j)*self.deltaT < self.model.qlim(j,1)% If next joint angle is lower than joint limit...
+                if qdot(i,j)*self.DELTA_T < self.model.qlim(j,1)% If next joint angle is lower than joint limit...
                     qdot(i,j) = 0; % Stop the motor
-                elseif qdot(i,j)*self.deltaT > self.model.qlim(j,2) % If next joint angle is greater than joint limit ...
+                elseif qdot(i,j)*self.DELTA_T > self.model.qlim(j,2) % If next joint angle is greater than joint limit ...
                     qdot(i,j) = 0; % Stop the motor
                 end
             end
-            self.qMatrix(i+1,:) = self.qMatrix(i,:) + self.deltaT*qdot(i,:); % Update next joint state based on joint velocities
+            self.qMatrix(i+1,:) = self.qMatrix(i,:) + self.DELTA_T*qdot(i,:); % Update next joint state based on joint velocities
             positionError(:,i) = deltaX;  % For plotting
-            angleError(:,i) = deltaTheta; % For plotting
+            angleError(:,i) = heta; % For plotting
         end
         end
-        
+        %% calculate quintic polynomial trajectory (to work with RunTraj)
+        function JTraJ(self, qGoal, steps)
+            self.qMatrix = jtraj(self.model.getpos, qGoal, steps);
+            
+            
+        end
         %% runs trajectory (with RMRC)
         function RunTraj(self)
             % Should be placed in a for loop with the same number of steps
