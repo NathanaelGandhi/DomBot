@@ -8,7 +8,8 @@ classdef MyCobot < EnvironmentObject
         % Vars
         workspace;
         rangeOfMotionPlot;
-        qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
+        qCurrent = [0, 0, -pi/5, -pi/2 + pi/5, -pi/2, 0];  % Current joint angles
+        %qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
         cameraPoints;                   % Array of generated camera points
         cameraObj;                      % Camera object created from CentralCamera class
