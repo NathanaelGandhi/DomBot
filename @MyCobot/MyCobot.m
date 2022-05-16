@@ -8,7 +8,7 @@ classdef MyCobot < EnvironmentObject
         rangeOfMotionPlot;
         
         % Variables for calculating trajectory (RMRC)
-        qCurrent = [0, 0, -pi/5, -pi/2 + pi/5, -pi/2, 0];  % Current joint angles
+        qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
         deltaT = 0.05;                          % Discrete time step
         W = diag([1 1 1 0.1 0.1 0.1]);          % Weighting matrix for the velocity vector
