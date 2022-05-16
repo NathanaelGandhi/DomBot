@@ -14,7 +14,7 @@ classdef MyCobot < EnvironmentObject
         W = diag([1 1 1 0.1 0.1 0.1]);          % Weighting matrix for the velocity vector
         
         % Damped Least Squares variables
-        epsilon = 0.1;
+        EPSILON = 0.1;
         lambdaMax = 5E-2;
         
         % Camera variables
@@ -194,8 +194,8 @@ classdef MyCobot < EnvironmentObject
             J = self.model.jacob0(self.qMatrix(i,:));                 % Get Jacobian at current joint state
 
             mu = sqrt(det(J*J'));
-            if mu < self.epsilon  % If manipulability is less than given threshold
-                lambda = (1-(mu/self.epsilon)^2)*self.lambdaMax; % Damping coefficient (try scaling it)
+            if mu < self.EPSILON  % If manipulability is less than given threshold
+                lambda = (1-(mu/self.EPSILON)^2)*self.lambdaMax; % Damping coefficient (try scaling it)
             else
                 lambda = 0;
             end
