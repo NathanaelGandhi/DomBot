@@ -200,10 +200,8 @@ classdef MyCobot < EnvironmentObject
             S = Rdot*Ra;                      % Skew symmetric! S(\omega)
             linear_velocity = (1/self.DELTA_T)*deltaX;
             angular_velocity = [S(3,2);S(1,3);S(2,1)];  % Check the structure of Skew Symmetric matrix! Extract the angular velocities. (see RMRC lectures)
-            deltaTheta = tr2rpy(Rd*Ra);% Convert rotation matrix to RPY angles
             xdot = self.W*[linear_velocity; angular_velocity];              % Calculate end-effector velocity to reach next waypoint.
             J = self.model.jacob0(self.qMatrix(i,:));                 % Get Jacobian at current joint state
-
             mu = sqrt(det(J*J'));
             if mu < self.EPSILON  % If manipulability is less than given threshold
                 lambda = (1-(mu/self.EPSILON)^2)*self.LAMBDA_MAX; % Damping coefficient (try scaling it)
@@ -220,8 +218,6 @@ classdef MyCobot < EnvironmentObject
                 end
             end
             self.qMatrix(i+1,:) = self.qMatrix(i,:) + self.DELTA_T*qdot(i,:); % Update next joint state based on joint velocities
-            positionError(:,i) = deltaX;  % For plotting
-            angleError(:,i) = heta; % For plotting
         end
         end
         %% calculate quintic polynomial trajectory (to work with RunTraj)
