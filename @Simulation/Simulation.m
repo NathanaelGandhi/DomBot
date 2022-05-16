@@ -247,7 +247,8 @@ classdef Simulation < handle
         end
         
         %% Function to run robot - state machine
-        function RunRobot(self)
+        % @robot Robot Number
+        function RunRobot(self,robot)
             % Runs the robot using the steps, domino count and states to
             % pick up and drop off dominoes.
             % CAUTION - this is a big function, and its pretty spaghetti.
@@ -286,7 +287,7 @@ classdef Simulation < handle
                 case self.HOMEPOSE
                     if self.envObjList{self.DOMINO}{1}.dominoState == self.FREE
                         % Determine the trajectory to the home pose
-                        self.envObjList{self.MYCOBOT}{1}.JTraJ(self.ROBOTHOME, self.STEPSTOTAL);
+                        self.envObjList{self.MYCOBOT}{robot}.JTraJ(self.ROBOTHOME, self.STEPSTOTAL);
                         % Set the program to run and record last state
                         % self.oldState = self.prevState; - not needed here
                         self.prevState = self.robotState;
@@ -294,7 +295,7 @@ classdef Simulation < handle
                         self.logObj.LogInfo('[SIM] Going to Home');
                     else
                         % Determine the trajectory to the standby pose
-                        self.envObjList{self.MYCOBOT}{1}.JTraJ(self.ROBOTSTANDBY, self.STEPSTOTAL);
+                        self.envObjList{self.MYCOBOT}{robot}.JTraJ(self.ROBOTSTANDBY, self.STEPSTOTAL);
                         % Set the program to run and record last state
                         self.prevState = self.STANDBY;
                         self.robotState = self.RUNNING;
@@ -318,10 +319,10 @@ classdef Simulation < handle
                     estimatePose = self.ROBOTHOVER;
                     estimatePose(1) = atan2(pose(14), pose(13));
                     % Determine the joint angles for the current pose
-                    qGoal = self.envObjList{self.MYCOBOT}{1}.model.ikcon(pose * transl(0,0,self.ROBOTEEOFFSET + self.ROBOTHOVEROFFSET), ...
+                    qGoal = self.envObjList{self.MYCOBOT}{robot}.model.ikcon(pose * transl(0,0,self.ROBOTEEOFFSET + self.ROBOTHOVEROFFSET), ...
                         estimatePose);
                     % Determine the trajectory to the home pose
-                    self.envObjList{self.MYCOBOT}{1}.JTraJ(qGoal, self.STEPSTOTAL);
+                    self.envObjList{self.MYCOBOT}{robot}.JTraJ(qGoal, self.STEPSTOTAL);
                     % Set the program to run and record last stated
                     self.oldState = self.prevState;
                     self.prevState = self.robotState;
@@ -340,10 +341,10 @@ classdef Simulation < handle
                         self.logObj.LogInfo('[SIM] Domino - Picking up');
                     end
                     % Determine the joint angles for the current pose
-                    qGoal = self.envObjList{self.MYCOBOT}{1}.model.ikcon(pose * transl(0,0,self.ROBOTEEOFFSET), ...
-                        self.envObjList{self.MYCOBOT}{1}.model.getpos);
+                    qGoal = self.envObjList{self.MYCOBOT}{robot}.model.ikcon(pose * transl(0,0,self.ROBOTEEOFFSET), ...
+                        self.envObjList{self.MYCOBOT}{robot}.model.getpos);
                     % Determine the trajectory to the home pose
-                    self.envObjList{self.MYCOBOT}{1}.JTraJ(qGoal, self.STEPSTOTAL);
+                    self.envObjList{self.MYCOBOT}{robot}.JTraJ(qGoal, self.STEPSTOTAL);
                     % Set the program to run and record last stated
                     self.oldState = self.prevState;
                     self.prevState = self.robotState;
@@ -352,7 +353,7 @@ classdef Simulation < handle
                     
                 case self.RUNNING
                     % Runs trajectory that was just calculated
-                    self.envObjList{self.MYCOBOT}{1}.RunTraj();
+                    self.envObjList{self.MYCOBOT}{robot}.RunTraj();
                     
                     % Increment the step count
                     self.stepsCurrent = self.stepsCurrent + 1;
@@ -360,7 +361,7 @@ classdef Simulation < handle
                     % If the domino is held, move the domino
                     if self.dominoFlag == self.OCCUPIED
                         % determine transform for domino
-                        dominoTF = self.envObjList{self.MYCOBOT}{1}.model.fkine(self.envObjList{self.MYCOBOT}{1}.model.getpos) * ...
+                        dominoTF = self.envObjList{self.MYCOBOT}{robot}.model.fkine(self.envObjList{self.MYCOBOT}{robot}.model.getpos) * ...
                             transl(0, 0, -1 * self.ROBOTEEOFFSET);
                         self.envObjList{self.DOMINO}{self.dominoCurrent}.UpdatePose(dominoTF);
                     end
@@ -420,7 +421,7 @@ classdef Simulation < handle
             % Main loop for code - runs the robot unless e-stopped
             while (self.simRunning)
                % Run robot state machine
-               RunRobot(self);
+               RunRobot(self,1);    % Run robot 1
                
                % TEMP - needs to be fixed so it doesn't log so much
                if (self.simRunning)
