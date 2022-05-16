@@ -15,7 +15,7 @@ classdef MyCobot < EnvironmentObject
         
         % Damped Least Squares variables
         EPSILON = 0.1;
-        lambdaMax = 5E-2;
+        LAMBDA_MAX = 5E-2;
         
         % Camera variables
         cam;
@@ -195,7 +195,7 @@ classdef MyCobot < EnvironmentObject
 
             mu = sqrt(det(J*J'));
             if mu < self.EPSILON  % If manipulability is less than given threshold
-                lambda = (1-(mu/self.EPSILON)^2)*self.lambdaMax; % Damping coefficient (try scaling it)
+                lambda = (1-(mu/self.EPSILON)^2)*self.LAMBDA_MAX; % Damping coefficient (try scaling it)
             else
                 lambda = 0;
             end
