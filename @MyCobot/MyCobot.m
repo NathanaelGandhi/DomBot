@@ -10,6 +10,7 @@ classdef MyCobot < EnvironmentObject
         rangeOfMotionPlot;
         qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
+        cameraPoints;                   % Array of generated camera points
         cam;                            % Camera variables - NEEDS BETTER NAMING!
         cam_h;                          % Cam plot - THIS THE HANDLE OR A PLOT?
     end
