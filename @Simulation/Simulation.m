@@ -223,10 +223,10 @@ classdef Simulation < handle
         end
         
         %% Function to run simulation "main" loop
-        function SetUpSim(self)     
+        function SetUpSim(self,selectedPath)     
             % Set path for dominoes - change CIRCLE to SEMICIRCLE or LINE
             % for other paths - LINE does not work right now
-            SetDominoPath(self, self.CIRCLE);
+            SetDominoPath(self, selectedPath);
             
             % Set goal poses for each domino
             GenerateDominoGoalPoses(self);
