@@ -8,10 +8,11 @@ classdef MyCobot < EnvironmentObject
         % Vars
         workspace;
         rangeOfMotionPlot;
-        qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
+        qCurrent = [0, 0, -pi/5, -pi/2 + pi/5, -pi/2, 0];  % Current joint angles
+        %qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
-        cam;                            % Camera variables - NEEDS BETTER NAMING!
-        cam_h;                          % Cam plot - THIS THE HANDLE OR A PLOT?
+        cameraPoints;                   % Array of generated camera points
+        cameraObj;                      % Camera object created from CentralCamera class
     end
     
     % Const Vars
@@ -68,7 +69,7 @@ classdef MyCobot < EnvironmentObject
             self = self@EnvironmentObject(logArg, id, pose, 'mycobot');
             self.workspace = self.SetMyCobotWorkspace();
             self.model = self.GetMyCobotRobot();
-            self.cam = self.GetCamera();
+            self.cameraObj = self.GetCamera();
             self.PlotAndColourRobot();                      % robot,workspace);
         end
         
@@ -88,10 +89,10 @@ classdef MyCobot < EnvironmentObject
         end
         
         %% Create camera for visual servoing
-        function cam = GetCamera(self)
-            cam = CentralCamera('focal', 0.08, 'pixel', 10e-5, ...
+        function cameraObj = GetCamera(self)
+            cameraObj = CentralCamera('focal', 0.08, 'pixel', 10e-5, ...
             'resolution', [1024 1024], 'centre', [512 512],'name', 'MyCobotCamera');
-            cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
+            cameraObj.T = self.model.fkine(self.qCurrent)*trotx(pi);
         end
         
         
@@ -168,8 +169,6 @@ classdef MyCobot < EnvironmentObject
         qdot = zeros(steps,6);             % Array for joint velocities
         theta = zeros(3,steps);            % Array for roll-pitch-yaw angles
         x = zeros(3,steps);                % Array for x-y-z trajectory
-        positionError = zeros(3,steps);    % For plotting trajectory error
-        angleError = zeros(3,steps);       % For plotting trajectory error
         
         % Calculates trapizoidal trajectory of end effector position
         Ti = self.myFkine(self.qCurrent);   % Transform of current end effector position
@@ -233,7 +232,7 @@ classdef MyCobot < EnvironmentObject
             self.qCurrent = self.qMatrix(1,:);
             self.qMatrix(1,:) = [];
             self.model.animate(self.qCurrent);
-            self.cam.T = self.model.fkine(self.qCurrent)*trotx(pi);
+            self.cameraObj.T = self.model.fkine(self.qCurrent)*trotx(pi);
             drawnow
         end
         
