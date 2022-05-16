@@ -4,14 +4,23 @@ classdef Simulation < handle
         logObj;         % Log object
         simRunning;     % Flag for simulation desired state
         envObjList;
-        dominosTotal;
+        dominosTotal;   % Total No. of dominoes
         simEStop;       % Flag for simulation E-Stop
         
         % Path properties
         pathType;               % Domino path type (Circle, line or semicircle)
         pathStartPt;            % 4x4 transform start point for domino path (world frame)
         pathEndPt;              % 4x4 transform end point for domino path (world frame)
-        currentStep;            % Value for current trajectory steps
+        
+        % Domino Collection properties
+        robotState;             % State of the arm (picking up domino, going home, etc)
+        prevState;              % Previous state of the arm
+        oldState;               % 2nd previous state of arm
+        dominoCurrent;          % Current domino being targeted by the robot
+        dominoFlag;             % Flag for if robot is holding domino
+        targetPose;             % Target pose of the robot
+        
+        stepsCurrent;           % Current steps for robot
         
     end
     % Const Vars
@@ -24,12 +33,35 @@ classdef Simulation < handle
         DOMINO = 6;
         STOPSIGN = 7;
         ROBOTREACH = 0.28;       %280 mm range of motion from MyCobot manual
-        ROBOTBASERADIUS = 0.05;  % Exclusion radius for robot base
+        ROBOTBASERADIUS = 0.15;  % Exclusion radius for robot base
+        DOMINOMAX = 15;             % Max no. of dominoes for path generation
+        DOMINOMIN = 45;             % Min no. of dominoes for path generation
         
-        % Domino path constants
+        % Domino path States
         CIRCLE = 1;
         SEMICIRCLE = 2;
         LINE = 3;
+        
+        % Robot Movement States
+        THINKING = 0;
+        HOVERPOSE = 1;
+        DOMINOPOSE = 2;
+        HOMEPOSE = 3;
+        RUNNING = 4;
+        STANDBY = 5;
+        
+        % myCobot Constants
+        ROBOTHOME = [0, -pi/8, -pi/2, pi/8, -pi/2, 0];  % Home Pose
+        ROBOTSTANDBY = [0, 0, 0, -pi/2, -pi/2, 0];      % Standby pose
+        ROBOTHOVER = [0, -pi/4, -pi/3, pi/8, -pi/2, 0]; % TEMP
+        ROBOTHOVEROFFSET = 0.07;                        % Offset from top of domino for hover pose
+        ROBOTEEOFFSET = 0.05;                           % Offset of EE to Domino
+        STEPSTOTAL = 50;                                % Total steps for robot movement
+        
+        % Domino States
+        FREE = 0;
+        OCCUPIED = 1;
+        PLACED = 2;
     end
     
     methods
@@ -137,8 +169,9 @@ classdef Simulation < handle
                 DominoPose = transl(...
                     self.envObjList{self.MYCOBOT}{1}.pose(13)+xPose, ...
                     self.envObjList{self.MYCOBOT}{1}.pose(14)+yPose, ...
-                    self.envObjList{self.MYCOBOT}{1}.pose(15));               % Domino Poses
-                self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));                % Spawn single object
+                    self.envObjList{self.MYCOBOT}{1}.pose(15));                         % Domino Poses
+                self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));          % Spawn single object
+                self.envObjList{self.DOMINO}{i}.dominoState = self.FREE;               % Set as available for pickup logic
             end
         end
         
@@ -191,55 +224,212 @@ classdef Simulation < handle
         end
         
         %% Function to run simulation "main" loop
-        function SetUpSim(self)
-            % TEST - set start point for path (in robot base frame)
-            startPoint = transl(0.2,0,0);
-            endPoint = startPoint;
-            
-            % Set path for dominoes
-            SetDominoPath(self, self.CIRCLE, startPoint, endPoint);
+        function SetUpSim(self)     
+            % Set path for dominoes - change CIRCLE to SEMICIRCLE or LINE
+            % for other paths - LINE does not work right now
+            SetDominoPath(self, self.CIRCLE);
             
             % Set goal poses for each domino
             GenerateDominoGoalPoses(self);
             
+            % LEAVE IN FOR TRAVIS DEBUG
             % TEST - Verify correct goal pose calculation (plots dominoes
-            % in goal poses)
-            for i = 1:self.dominosTotal
-                self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
-            end
-        end
-        
-        %% Function to run simulation "main" loop
-        function RunSim(self)
-            % UPDATE REQIUIRED - changes made for video
-            
-%             % TEST - set start point for path (in robot base frame)
-%             startPoint = transl(0.2,0,0);
-%             endPoint = startPoint;
-%             
-%             % Set path for dominoes
-%             SetDominoPath(self, self.CIRCLE, startPoint, endPoint);
-%             
-%             % Set goal poses for each domino
-%             GenerateDominoGoalPoses(self);
-            
-            % Test to verify correct goal pose calculation (plots dominoes
             % in goal poses)
 %             for i = 1:self.dominosTotal
 %                 self.envObjList{self.DOMINO}{i}.UpdatePose(self.envObjList{self.DOMINO}{i}.desiredPose);
 %             end
             
+            % Set up robot movement parameters
+            self.dominoCurrent = 1;                 % Set the current domino at 1
+            self.robotState = self.HOMEPOSE;        % Set the current state to go to home
+            self.stepsCurrent = 0;                  % Current step is 0, iterated when running
+            self.dominoFlag = self.FREE;            % Robot is not holding a domino
+        end
+        
+        %% Function to run robot - state machine
+        function RunRobot(self)
+            % Runs the robot using the steps, domino count and states to
+            % pick up and drop off dominoes.
+            % CAUTION - this is a big function, and its pretty spaghetti.
+            % Oops...
+            
+            % State machine - the brains behind the movement
+            switch self.robotState
+                
+                % Determining domino for the arm to target
+                case self.THINKING
+                    % Checking domino array for available dominoes
+                    for i = 1:self.dominosTotal
+                        % If available domino found
+                        if self.envObjList{self.DOMINO}{i}.dominoState == self.FREE
+                            % Protect
+                            self.envObjList{self.DOMINO}{i}.dominoState = self.OCCUPIED;
+                            % Set current domino as target
+                            self.dominoCurrent = i;
+                            % Set the program to determine the path and record last state
+                            self.oldState = self.prevState;
+                            self.prevState = self.robotState;
+                            self.robotState = self.HOVERPOSE;
+                            self.logObj.LogInfo('[SIM] Thinking - Moving to free domino');
+                            self.logObj.LogInfo(num2str(self.dominoCurrent));
+                            % Break the loop
+                            break;
+                        elseif self.envObjList{self.DOMINO}{self.dominosTotal}.dominoState == self.OCCUPIED
+                            % If the robot finds no available dominos, go
+                            % to standby - job done!
+                            self.robotState = self.HOMEPOSE;
+                            self.logObj.LogInfo('[SIM] Thinking - No free dominos');
+                        end
+                    end
+                    
+                % Plan path to the home or standby pose of the robot
+                case self.HOMEPOSE
+                    if self.envObjList{self.DOMINO}{1}.dominoState == self.FREE
+                        % Determine the trajectory to the home pose
+                        self.envObjList{self.MYCOBOT}{1}.JTraJ(self.ROBOTHOME, self.STEPSTOTAL);
+                        % Set the program to run and record last state
+                        % self.oldState = self.prevState; - not needed here
+                        self.prevState = self.robotState;
+                        self.robotState = self.RUNNING;
+                        self.logObj.LogInfo('[SIM] Going to Home');
+                    else
+                        % Determine the trajectory to the standby pose
+                        self.envObjList{self.MYCOBOT}{1}.JTraJ(self.ROBOTSTANDBY, self.STEPSTOTAL);
+                        % Set the program to run and record last state
+                        self.prevState = self.STANDBY;
+                        self.robotState = self.RUNNING;
+                        self.logObj.LogInfo('[SIM] Going to standby');
+                        % Needs a way to be 'turned off'
+                    end
+                
+                % Plan path for hovering over domino current or goal pose
+                case self.HOVERPOSE
+                    % Set the hover pose - either goal or current
+                    if (self.prevState == self.DOMINOPOSE || self.prevState == self.THINKING)
+                        pose = self.envObjList{self.DOMINO}...
+                        {self.dominoCurrent}.pose;
+                        self.logObj.LogInfo('[SIM] Hovering - above current');
+                    else
+                        pose = self.envObjList{self.DOMINO}...
+                        {self.dominoCurrent}.desiredPose;
+                        self.logObj.LogInfo('[SIM] Hovering - above goal');
+                    end
+                    % Determine estimate for ikcon
+                    estimatePose = self.ROBOTHOVER;
+                    estimatePose(1) = atan2(pose(14), pose(13));
+                    % Determine the joint angles for the current pose
+                    qGoal = self.envObjList{self.MYCOBOT}{1}.model.ikcon(pose * transl(0,0,self.ROBOTEEOFFSET + self.ROBOTHOVEROFFSET), ...
+                        estimatePose);
+                    % Determine the trajectory to the home pose
+                    self.envObjList{self.MYCOBOT}{1}.JTraJ(qGoal, self.STEPSTOTAL);
+                    % Set the program to run and record last stated
+                    self.oldState = self.prevState;
+                    self.prevState = self.robotState;
+                    self.robotState = self.RUNNING;
+                
+                % Plan path for moving to domino current or goal pose
+                case self.DOMINOPOSE
+                    % Set the domino pose - either goal or current
+                    if self.dominoFlag == self.OCCUPIED
+                        pose = self.envObjList{self.DOMINO}...
+                        {self.dominoCurrent}.desiredPose;
+                        self.logObj.LogInfo('[SIM] Domino - setting down');
+                    else
+                        pose = self.envObjList{self.DOMINO}...
+                        {self.dominoCurrent}.pose;
+                        self.logObj.LogInfo('[SIM] Domino - Picking up');
+                    end
+                    % Determine the joint angles for the current pose
+                    qGoal = self.envObjList{self.MYCOBOT}{1}.model.ikcon(pose * transl(0,0,self.ROBOTEEOFFSET), ...
+                        self.envObjList{self.MYCOBOT}{1}.model.getpos);
+                    % Determine the trajectory to the home pose
+                    self.envObjList{self.MYCOBOT}{1}.JTraJ(qGoal, self.STEPSTOTAL);
+                    % Set the program to run and record last stated
+                    self.oldState = self.prevState;
+                    self.prevState = self.robotState;
+                    self.robotState = self.RUNNING;
+                    
+                    
+                case self.RUNNING
+                    % Runs trajectory that was just calculated
+                    self.envObjList{self.MYCOBOT}{1}.RunTraj();
+                    
+                    % Increment the step count
+                    self.stepsCurrent = self.stepsCurrent + 1;
+                    
+                    % If the domino is held, move the domino
+                    if self.dominoFlag == self.OCCUPIED
+                        % determine transform for domino
+                        dominoTF = self.envObjList{self.MYCOBOT}{1}.model.fkine(self.envObjList{self.MYCOBOT}{1}.model.getpos) * ...
+                            transl(0, 0, -1 * self.ROBOTEEOFFSET);
+                        self.envObjList{self.DOMINO}{self.dominoCurrent}.UpdatePose(dominoTF);
+                    end
+                    
+                    % If max steps reached, the move is completed - go to next
+                    % step in the state machine
+                    if self.stepsCurrent == self.STEPSTOTAL
+                        
+                        % Reset step count
+                        self.stepsCurrent = 0;
+                        
+                        % Logic for next state
+                        % State 1 - No dominoes moved and robot thinking
+                        if (self.prevState == self.HOMEPOSE)
+                            % Find first free domino
+                            self.robotState = self.THINKING;
+                            
+                        % State 2 - Hovering over domino current or goal
+                        elseif (self.prevState == self.HOVERPOSE && self.oldState == self.THINKING)
+                            self.robotState = self.DOMINOPOSE;
+                            
+                        % State 3 - 
+                        elseif (self.prevState == self.DOMINOPOSE && self.oldState == self.HOVERPOSE)
+                            self.robotState = self.HOVERPOSE;
+                            self.dominoFlag = self.OCCUPIED - self.dominoFlag;
+                            
+                        % State 4 - Hovering over domino current or goal
+                        elseif (self.prevState == self.HOVERPOSE && self.oldState == self.DOMINOPOSE)
+                            if self.dominoFlag == self.FREE
+                                self.robotState = self.THINKING;
+                            else
+                                self.robotState = self.HOVERPOSE;
+                            end
+                            
+                        % State 5 - 
+                        elseif (self.prevState == self.HOVERPOSE && self.oldState == self.HOVERPOSE)
+                            self.robotState = self.DOMINOPOSE;
+                            
+                        elseif (self.prevState == self.STANDBY)
+                            self.robotState = self.STANDBY;
+                        else
+                            self.logObj.LogInfo('[SIM] ERROR');
+                            
+                        end
+                    end
+                case self.STANDBY
+                    self.dominoCurrent = 1;                 % Set the current domino at 1
+                    self.stepsCurrent = 0;                  % Current step is 0, iterated when running
+                    self.dominoFlag = self.FREE;            % Robot is not holding a domino
+                    
+            end
+            
+        end
+        
+        %% Function to run simulation "main" loop
+        function RunSim(self)
+            % Main loop for code - runs the robot unless e-stopped
             while (self.simRunning)
-               % Sim running. Loop while flag condition is true 
+               % Run robot state machine
+               RunRobot(self);
+               
+               % TEMP - needs to be fixed so it doesn't log so much
                if (self.simRunning)
-                   pause(1);
-                   self.logObj.LogDebug('[SIM] Sim Running'); 
-               elseif (self.simRunning == 0)
-                   self.logObj.LogDebug('[SIM] Sim E-Stopped');
-                   break;
+                   pause(0.01);
+                   % self.logObj.LogDebug('[SIM] Sim Running'); 
                end
             end
-             self.logObj.LogInfo('[SIM] Simulation Stopped');
+            % Log E-Stop activation
+            self.logObj.LogInfo('[SIM] Simulation Stopped');
         end
         
         %% Function to start "teach classic"
@@ -258,36 +448,55 @@ classdef Simulation < handle
         end
         
         %% Function to set desired domino path
-        function SetDominoPath(self, pathInput, startPt, endPt)
+        function SetDominoPath(self, pathInput)
             % UPDATE REQUIRED
-            % - If, elseif statement used as further modification will
-            % require this later on. 
             % - Program does not check for path validity of the line,
             % meaning that it can pass through the robot base.
             % - Function will only work with one robot, and requires
             % modification if intending to implement more robots.
             
             % NOTE - Path inputs are specified from the robots base frame
-            
             % Log the sim state
             self.logObj.LogInfo('[SIM] Setting Domino Path');
             
+            % Set the path type
+            self.pathType = pathInput;
+            
             % Set the domino path based on user input
-            if pathInput == self.CIRCLE
-                self.pathType = pathInput;
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
-                self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt; %% EndPt will equal startPT for circle
-            elseif pathInput == self.SEMICIRCLE
-                self.pathType = pathInput;
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
-                self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt;
-            elseif pathInput == self.LINE
-                self.pathType = pathInput;
-                self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
-                self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt;
+            % Circle or semicircle path
+            if (pathInput == self.CIRCLE || pathInput == self.SEMICIRCLE)
+                % Automatically scale radius based on domino number
+                radiusArray = [self.DOMINOMIN, self.dominosTotal, self.DOMINOMAX];
+                mappedArray = (radiusArray-min(radiusArray))* ...
+                    (self.ROBOTREACH-self.ROBOTBASERADIUS)/...
+                    (max(radiusArray)-min(radiusArray)) + self.ROBOTBASERADIUS;
+                
+                % Start point for circle is located on the x axis => y=0
+                pathX = mappedArray(2);
+                
+                % Set start and end point for circle or semicircle
+                startPt = transl(pathX,0,0);
+                if (pathInput == self.CIRCLE)
+                    endPt = startPt;
+                else
+                    endPt = transl(-1*pathX,0,0);
+                end
+            
+            % Straight Line Path
+            elseif (pathInput == self.LINE)
+                
+                %INCOMPLETE
+                
+                startPt = transl(0,0,0);
+                endPt = tranls(0,0,0);
+                
             else %ERROR
                 self.logObj.LogInfo('[SIM] ERROR - Domino path not specified');
             end
+            
+            % Set the start and end pts for the path
+            self.pathStartPt = self.envObjList{self.MYCOBOT}{1}.model.base * startPt;
+            self.pathEndPt = self.envObjList{self.MYCOBOT}{1}.model.base * endPt;
         end
         
         %% Function to generate goal domino poses
@@ -307,17 +516,26 @@ classdef Simulation < handle
             self.logObj.LogInfo('[SIM] Calculating Domino Poses');
             
             % Determine domino goal poses using stored data
-            if self.pathType == self.CIRCLE
-                % Set a path around the robot with the specified startPt
-                
+            % Set a circle or semicircle path around the robot with the specified startPt
+            if (self.pathType == self.CIRCLE || self.pathType == self.SEMICIRCLE)
                 % Determine radius as distance from startPt to robot base
                 pathRadius = hypot(self.pathStartPt(13),self.pathStartPt(14));
                 
-                % Determine distance around circle for each domino
-                goalTransIncrement = (2*pi*pathRadius)/self.dominosTotal;
+                % Set the angle and increment for the circle or semicircle
+                if (self.pathType == self.SEMICIRCLE)
+                    % Determine distance around semicircle for each domino
+                    goalTransIncrement = (pi*pathRadius)/self.dominosTotal;
+                    % Semicircle angle
+                    angleTotal = 180;
+                else
+                    % Determine distance around circle for each domino
+                    goalTransIncrement = (2*pi*pathRadius)/self.dominosTotal;
+                    % Circle total angle
+                    angleTotal = 360;
+                end
                 
-                % Determine the increment 
-                goalAngleIncrement = 360/self.dominosTotal;
+                % Determine the angle increment for each domino
+                goalAngleIncrement = angleTotal/self.dominosTotal;
                 
                 % Set the transform for the first domino (in world frame)
                 pathTF = self.pathStartPt * transl(0, 0, self.envObjList{self.DOMINO}{1}.dominoZOffset);
@@ -335,11 +553,8 @@ classdef Simulation < handle
                     
                 end
                 
-            elseif self.pathType == self.SEMICIRCLE
-                % Empty for now
-                
-            elseif self.pathType == self.LINE
-                % Empty for now
+            elseif (self.pathType == self.LINE)
+                % INCOMPLETE
                 
             else % ERROR
                 self.logObj.LogInfo('[SIM] ERROR - Domino path not set');
