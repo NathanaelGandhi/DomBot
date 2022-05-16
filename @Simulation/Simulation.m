@@ -32,8 +32,8 @@ classdef Simulation < handle
         EXTINGUISHER = 5;
         DOMINO = 6;
         STOPSIGN = 7;
-        ROBOTREACH = 0.27;       %280 mm range of motion from MyCobot manual
-        ROBOTBASERADIUS = 0.25;  % Exclusion radius for robot base
+        ROBOTREACH = 0.25;       %280 mm range of motion from MyCobot manual
+        ROBOTBASERADIUS = 0.20;  % Exclusion radius for robot base
         DOMINOMAX = 15;             % Max no. of dominoes for path generation
         DOMINOMIN = 45;             % Min no. of dominoes for path generation
         
@@ -51,9 +51,10 @@ classdef Simulation < handle
         
         % myCobot Constants
         ROBOTHOME = [0, -pi/8, -pi/2, pi/8, -pi/2, 0];  % Home Pose
-        ROBOTSTANDBY = [0, 0, 0, -pi/4, -pi/4, 0];      % Standby pose
-        ROBOTHOVEROFFSET = 0.06;                        % Offset from top of domino for hover pose
-        ROBOTEEOFFSET = 0.03;                           % Offset of EE to Domino
+        ROBOTSTANDBY = [0, 0, 0, -pi/2, -pi/2, 0];      % Standby pose
+        ROBOTHOVER = [0, -pi/4, -pi/3, pi/8, -pi/2, 0]; % TEMP
+        ROBOTHOVEROFFSET = 0.07;                        % Offset from top of domino for hover pose
+        ROBOTEEOFFSET = 0.05;                           % Offset of EE to Domino
         
         % Domino States
         FREE = 0;
@@ -224,7 +225,7 @@ classdef Simulation < handle
         function SetUpSim(self)     
             % Set path for dominoes - change CIRCLE to SEMICIRCLE or LINE
             % for other paths - LINE does not work right now
-            SetDominoPath(self, self.SEMICIRCLE);
+            SetDominoPath(self, self.CIRCLE);
             
             % Set goal poses for each domino
             GenerateDominoGoalPoses(self);
@@ -318,9 +319,10 @@ classdef Simulation < handle
                         self.logObj.LogInfo('[SIM] Hovering - above goal');
                     end
                     % Determine estimate for ikcon
-                    estPose = self.envObjList{self.MYCOBOT}{1}.model.getpos;
-%                     estPose = self.ROBOTHOME;
+                    estPose = self.ROBOTHOVER;
                     estPose(1) = atan2(pose(14), pose(13));
+%                     rot = tr2rpy(pose);
+%                     estPose(6) = rot(3);
                     % Determine the joint angles for the current pose
                     qGoal = self.envObjList{self.MYCOBOT}{1}.model.ikcon(pose * transl(0,0,self.ROBOTEEOFFSET + self.ROBOTHOVEROFFSET), ...
                         estPose);

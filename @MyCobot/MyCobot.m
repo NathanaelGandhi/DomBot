@@ -220,8 +220,8 @@ classdef MyCobot < EnvironmentObject
         end
         end
         %% calculate quintic polynomial trajectory (to work with RunTraj)
-        function JTraJ(self, transform, steps)
-            self.qMatrix = jtraj(self.model.getpos, transform, steps);
+        function JTraJ(self, qGoal, steps)
+            self.qMatrix = jtraj(self.model.getpos, qGoal, steps);
             
             
         end
