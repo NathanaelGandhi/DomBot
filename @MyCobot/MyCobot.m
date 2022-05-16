@@ -10,7 +10,7 @@ classdef MyCobot < EnvironmentObject
         % Variables for calculating trajectory (RMRC)
         qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
-        deltaT = 0.05;                          % Discrete time step
+        DELTA_T = 0.05;                          % Discrete time step
         W = diag([1 1 1 0.1 0.1 0.1]);          % Weighting matrix for the velocity vector
         
         % Damped Least Squares variables
@@ -185,9 +185,9 @@ classdef MyCobot < EnvironmentObject
             Rd = rpy2r(theta(1,i+1),theta(2,i+1),theta(3,i+1));      % Get next RPY angles, convert to rotation matrix
             Ra = T(1:3, 1:3);                % Current end-effector rotation matrix
 
-            Rdot = (1/self.deltaT)*(Rd - Ra);       % Calculate rotation matrix error (see RMRC lectures)
+            Rdot = (1/self.DELTA_T)*(Rd - Ra);       % Calculate rotation matrix error (see RMRC lectures)
             S = Rdot*Ra;                      % Skew symmetric! S(\omega)
-            linear_velocity = (1/self.deltaT)*deltaX;
+            linear_velocity = (1/self.DELTA_T)*deltaX;
             angular_velocity = [S(3,2);S(1,3);S(2,1)];  % Check the structure of Skew Symmetric matrix! Extract the angular velocities. (see RMRC lectures)
             deltaTheta = tr2rpy(Rd*Ra);% Convert rotation matrix to RPY angles
             xdot = self.W*[linear_velocity; angular_velocity];              % Calculate end-effector velocity to reach next waypoint.
@@ -202,15 +202,15 @@ classdef MyCobot < EnvironmentObject
             invJ = inv(J'*J+lambda*eye(6))*J'; % Apply Damped Least Squares pseudoinverse
             qdot(i,:) = (invJ*xdot)'; % Solve the RMRC equation (you may need to transpose the         vector)
             for j = 1:6 % Loop through joints 1 to 6
-                if qdot(i,j)*self.deltaT < self.model.qlim(j,1)% If next joint angle is lower than joint limit...
+                if qdot(i,j)*self.DELTA_T < self.model.qlim(j,1)% If next joint angle is lower than joint limit...
                     qdot(i,j) = 0; % Stop the motor
-                elseif qdot(i,j)*self.deltaT > self.model.qlim(j,2) % If next joint angle is greater than joint limit ...
+                elseif qdot(i,j)*self.DELTA_T > self.model.qlim(j,2) % If next joint angle is greater than joint limit ...
                     qdot(i,j) = 0; % Stop the motor
                 end
             end
-            self.qMatrix(i+1,:) = self.qMatrix(i,:) + self.deltaT*qdot(i,:); % Update next joint state based on joint velocities
+            self.qMatrix(i+1,:) = self.qMatrix(i,:) + self.DELTA_T*qdot(i,:); % Update next joint state based on joint velocities
             positionError(:,i) = deltaX;  % For plotting
-            angleError(:,i) = deltaTheta; % For plotting
+            angleError(:,i) = heta; % For plotting
         end
         end
         %% calculate quintic polynomial trajectory (to work with RunTraj)
