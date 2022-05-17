@@ -8,13 +8,14 @@ function teachObject(self)
     self.to_h.sliderLabels = ['X','Y','Z','R', 'P', 'Y'];
     
     sliderTollerance = 0.05;    % 5cm tollerance
+    xyLimit = 3;
     self.to_h.sliderLimits = [... 
-        -4-sliderTollerance, 4+sliderTollerance; ...    %Based on the simulated environment
-        -4-sliderTollerance, 4+sliderTollerance; ...    %Based on the simulated environment
+        -xyLimit-sliderTollerance, xyLimit+sliderTollerance; ...    %Based on the simulated environment
+        -xyLimit-sliderTollerance, xyLimit+sliderTollerance; ...    %Based on the simulated environment
         1, 2+sliderTollerance; ...                      %Based on the simulated above the table
-        -181, 181; ...     & Degrees with +/-1 for overshoot
-        -181, 181; ...
-        -181, 181]; 
+        0, 360; ...     & Degrees with +/-1 for overshoot
+        0, 360; ...
+        0, 360]; 
     %-------------------------------
     InstallTheObjectPanel(self);
     MakeObjectSliders(self);
