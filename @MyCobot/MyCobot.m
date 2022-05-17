@@ -103,6 +103,7 @@ classdef MyCobot < EnvironmentObject
             % qMatrix trajectory array
             if isempty(self.qMatrix)
                 
+                
             else
                 % if qMatrix is not empty, then the robot needs to be
                 % moving
@@ -112,7 +113,6 @@ classdef MyCobot < EnvironmentObject
             end
         end
         
-        %% 
         %% Makes robot search for stop sign points using cameraObject
         function searchForStopSign(self, stopSignObject)
             % Updates position of stopSignObject square points
@@ -189,6 +189,9 @@ classdef MyCobot < EnvironmentObject
             if isempty(self.cameraPoints)
                 error('No cameraPoints were generated before displayImagePlane ran');
             else
+                self.cameraObject.clf;
+                self.cameraObject.plot(self.IDEAL_IMAGE_POINTS,'+', 'Color', 'r');
+                self.cameraObject.hold(true)
                 % Plots the cameraPoints onto the cameraObject image plane.
                 % If the cameraPoints are not in cameraObject's field of
                 % view, then the non-visable points won't show up on the
