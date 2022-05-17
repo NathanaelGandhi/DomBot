@@ -81,7 +81,9 @@ classdef Simulation < handle
             barrierList = {};
             lightList = {};
             personList = {};
-            self.objList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList, barrierList, lightList};
+            self.objList = {genericList, tableList, myCobotList, ...
+                stopButtonList, extinguisherList, dominoList, ...
+                stopSignList, barrierList, lightList, personList};
         end
         
         %Deconstructor
