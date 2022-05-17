@@ -464,12 +464,14 @@ classdef Simulation < handle
         %% Function to run simulation "main" loop
         function RunSim(self)
             % Main loop for code - runs the robot unless e-stopped
-            while (self.simRunning)
-               % Run robot state machine
-               RunRobot(self,1);    % Run robot 1
+            while (~self.simEStop)
+                while (self.simRunning)
+                   % Run robot state machine
+                   RunRobot(self,1);    % Run robot 1
+                end
+                % Log E-Stop activation
+                self.logObj.LogInfo('[SIM] Simulation Stopped');
             end
-            % Log E-Stop activation
-            self.logObj.LogInfo('[SIM] Simulation Stopped');
         end
         
         %% Function to start "teach classic"
