@@ -140,6 +140,9 @@ classdef Simulation < handle
                case 'light'
                    id = numel(self.objList{self.LIGHT} ) + 1;
                    self.objList{self.LIGHT}{id} = envObj; 
+               case 'person'
+                   id = numel(self.objList{self.PERSON} ) + 1;
+                   self.objList{self.PERSON}{id} = envObj; 
                otherwise
                    id = numel(self.objList{self.GENERIC} ) + 1;
                    self.objList{self.GENERIC}{id} = envObj; 
