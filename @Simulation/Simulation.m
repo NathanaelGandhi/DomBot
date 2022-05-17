@@ -468,9 +468,10 @@ classdef Simulation < handle
             % Main loop for code - runs the robot unless e-stopped
             while (~self.simEStop)
                 while (self.simRunning)
-                    CollisionAvoidance(self)
                     % Run robot state machine
                     RunRobot(self,1);    % Run robot 1
+                    % Check for collisions with the stop sign
+                    CollisionAvoidance(self);
                 end
                 % Log E-Stop activation
                 self.logObj.LogInfo('[SIM] Simulation Stopped');
@@ -513,6 +514,20 @@ classdef Simulation < handle
                 faceNormals(faceIndex,:) = unit(cross(v2-v1,v3-v1));
             end
             
+            % If the sim is running, a qMatrix has been computed and can be
+            % used to check for collision
+            if self.robotState == self.RUNNING
+                % Check for collisions between myCobot and the stop sign
+                robot = self.objList{self.MYCOBOT}{1};
+                qmat = self.objList{self.MYCOBOT}{1}.qMatrix;
+                
+                if IsCollision(self.objList{self.MYCOBOT}{1}, self.objList{self.MYCOBOT}{1}.qMatrix,...
+                        face,vertex,faceNormals)
+                    % Do something to avoid the collision - probably should
+                    % call the robots path generation code here or in the
+                    % runSim function.
+                end
+            end
         end
         
         %% LinePlaneIntersection - LAB 5
@@ -592,7 +607,7 @@ classdef Simulation < handle
         function result = IsCollision(robot,qMatrix,faces,vertex,faceNormals,returnOnceFound)
             
             % Sets function to return
-            if nargin < 6
+            if nargin < 5
                 returnOnceFound = true;
             end
             % Set result flag to be false
@@ -604,7 +619,7 @@ classdef Simulation < handle
                 % tr = GetLinkPoses(qMatrix(qIndex,:), robot);
                 % Get the TF for every link (stored in linkTF) - eeTF
                 % disregarded here as it is also stored in linkTF(4x4x6)
-                [eeTF, linkTF] = self.objList{self.MYCOBOT}{robot}.model.fkine(qMatrix(qIndex,:));
+                [eeTF, linkTF] = robot.model.fkine(qMatrix(qIndex,:));
 
                 % Go through each link of myCobot
                 for i = 1 : size(linkTF,3)-1  
