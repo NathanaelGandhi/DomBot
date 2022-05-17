@@ -524,6 +524,7 @@ classdef Simulation < handle
                     % Do something to avoid the collision - probably should
                     % call the robots path generation code here or in the
                     % runSim function.
+                    self.logObj.logWarn('Almost a collision');
                 end
             end
         end
