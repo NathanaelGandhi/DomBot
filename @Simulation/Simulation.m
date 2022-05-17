@@ -474,6 +474,16 @@ classdef Simulation < handle
             end
         end
         
+        %% RobotRetreat
+        % Just place this function in a while loop
+        function RobotRetreat(self)
+            if self.objList{self.MYCOBOT}{1}.searchOrRetreatFlag
+                self.objList{self.MYCOBOT}{1}.robotRetreat(self.objList{self.STOPSIGN}{1});
+            else
+                self.objList{self.MYCOBOT}{1}.searchForStopSign(self.objList{self.STOPSIGN}{1});
+            end
+        end
+        
         %% Function to start "teach classic"
         function StartClassicTeach(self)
             self.objList{self.MYCOBOT}{1}.StartClassicTeach();

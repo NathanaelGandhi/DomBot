@@ -393,6 +393,15 @@ classdef MyCobot < EnvironmentObject
             drawnow
         end
         
+        %% Sim RobotRetreat function
+        function RobotRetreat(self)
+            if self.searchOrRetreatFlag
+                self.robotRetreat(stopSignObject);
+            else
+                self.searchForStopSign(stopSignObject);
+            end
+        end
+        
         %% Function to start "teach classic"
         function StartClassicTeach(self)
             self.teach();
