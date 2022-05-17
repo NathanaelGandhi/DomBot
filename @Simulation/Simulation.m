@@ -600,16 +600,12 @@ classdef Simulation < handle
                     pathTF = pathTF * trotz(deg2rad(goalAngleIncrement/2)) * ...
                         transl(0, goalTransIncrement, 0) * ...
                         trotz(deg2rad(goalAngleIncrement/2));
-                    
                 end
-                
             elseif (self.pathType == self.LINE)
                 % INCOMPLETE
-                
             else % ERROR
                 self.logObj.LogInfo('[SIM] ERROR - Domino path not set');
             end
-            
         end
     end
 end
