@@ -99,6 +99,20 @@ classdef MyCobot < EnvironmentObject
         
         %% To make the robot retreat from a simulated safety symbol using visual servoing and RMRC
         function robotRetreat(self, stopSignObject)
+            % Updates stop sign points
+            self.generateStopSignPoints(stopSignObject);
+            
+            % Updates image plane plot
+            self.displayImagePlane();
+            
+            % Checks if the stop sign points are still visible in the image
+            % plane
+            if isnan(self.imagePoints)
+                % If there are any stop sign points that aren't visible,
+                % the robot would have to switch to searchForStopSign mode
+                self.searchOrRetreatFlag = false;                
+            end
+            
             % if qMatrix is empty, then the robot isn't moving, so calculate
             % qMatrix trajectory array
             if isempty(self.qMatrix)
