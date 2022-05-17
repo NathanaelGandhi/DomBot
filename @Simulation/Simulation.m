@@ -467,11 +467,6 @@ classdef Simulation < handle
             while (self.simRunning)
                % Run robot state machine
                RunRobot(self,1);    % Run robot 1
-               
-               % TEMP - needs to be fixed so it doesn't log so much
-               if (self.simRunning)
-                   pause(0.01); 
-               end
             end
             % Log E-Stop activation
             self.logObj.LogInfo('[SIM] Simulation Stopped');
