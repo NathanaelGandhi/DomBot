@@ -21,7 +21,7 @@ function teachObject(self)
     CreateObjectPositionDisplay(self);
     CreateObjectOrientationDisplay(self);
     AddExitButtonObject(self);
-%     AssignObjectCallbacks(self);
+    AssignObjectCallbacks(self);
 end
 
 function teach_Objectcallback(src, self, j)
