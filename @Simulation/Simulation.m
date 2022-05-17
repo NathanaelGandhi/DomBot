@@ -200,7 +200,7 @@ classdef Simulation < handle
             end
             
             % Person Objects
-            personPose = {transl(0,2,0)};                                                       % Person Poses
+            personPose = {transl(0,5,1) * trotx(pi/2)};                                                       % Person Poses
             for i = 1:numel(personPose)
                 self.AddEnvironmentObject(Person(self.logObj, i, personPose{i}));               % Spawn single object 
             end

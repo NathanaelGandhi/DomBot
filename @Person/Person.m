@@ -16,10 +16,10 @@ classdef Person < EnvironmentObject
             self.vertexCount = size(verts, 1);
             % Scale the colours to be 0-to-1 (they are originally 0-to-255
             try
-                vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
+                vertexColours = 1-([data.vertex.red, data.vertex.green, data.vertex.blue] / 255);
             catch
                 % Ply data var uses xyz, not rgb
-                vertexColours = [data.vertex.x, data.vertex.y, data.vertex.z] / 255;
+                vertexColours = 1-([data.vertex.x, data.vertex.y, data.vertex.z] / 255);
             end
             % Set desired base pose
             self.pose = pose;
