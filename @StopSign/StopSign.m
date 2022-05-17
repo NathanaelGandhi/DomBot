@@ -28,5 +28,10 @@ classdef StopSign < EnvironmentObject
             self.model = trisurf(tris,updatedPoints(:,1), updatedPoints(:,2), updatedPoints(:,3) ...
                 ,'FaceVertexCData',vertexColours,'EdgeColor','interp','EdgeLighting','flat');
         end
+                
+        %% Function to start "teach object"
+        function StartObjectTeach(self)
+            self.teachObject();
+        end
     end
 end
