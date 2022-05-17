@@ -43,11 +43,13 @@ function teach_Objectcallback(src, self, j)
     % Get the angles
     angles = tr2rpy(self.pose);                        % Radians
     
+    newPose = self.pose;
+    
     % Assign the relevant updated value
     switch(j)
         case {1,2,3}
             % Got XYZ position just update
-            self.pose(j,4) = newval;
+            newPose(j,4) = newval;
         case {4,5,6}
             % Got an angle in radians
             newval = deg2rad(newval);
@@ -55,9 +57,11 @@ function teach_Objectcallback(src, self, j)
     end
     
     % Generate new end effector transform
+    t = transl(newPose(1,4),newPose(2,4),newPose(3,4));   % Translation component
+    r = rpy2tr(angles);                                         % Rotation component
+    tr = t*r;
     % Update the Stop Sign model
-    self.UpdatePose(transl(self.pose(1,4),self.pose(2,4),self.pose(3,4)) ...
-        * rpy2tr(angles));                      % Radians
+    self.UpdatePose(tr);                      % Radians
     
     % Update all sliders and edit boxes
     n = size(self.to_h.sliderLabels,2);
