@@ -531,6 +531,7 @@ classdef Simulation < handle
             end
         end
         
+        %% Function to check if IsCollision
         function result = myIsCollision(self)
             robot = self.objList{self.MYCOBOT}{1};
             qMatrix = self.objList{self.MYCOBOT}{1}.qMatrix;
@@ -585,6 +586,7 @@ classdef Simulation < handle
             end
         end
         
+        %% Function to check IsIntersectionPointInsideTriange
         function result = myIsIntersectionPointInsideTriangle(self,intersectP,triangleVerts)
             u = triangleVerts(2,:) - triangleVerts(1,:);
             v = triangleVerts(3,:) - triangleVerts(1,:);
@@ -615,6 +617,7 @@ classdef Simulation < handle
             result = 1;                      % intersectP is in Triangle
         end
         
+        %% Function for LinePlaneIntersection
         function [intersectionPoint,check] = myLinePlaneIntersection(self,planeNormal,pointOnPlane,point1OnLine,point2OnLine)
             intersectionPoint = [0 0 0];
             u = point2OnLine - point1OnLine;
