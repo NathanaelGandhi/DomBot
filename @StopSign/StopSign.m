@@ -1,6 +1,7 @@
 classdef StopSign < EnvironmentObject
     properties
-        model;                      % Class object
+        model;          % Class object
+        to_h;           % Teach Object handle
         vertexCount;    % Vertex count
     end
     
