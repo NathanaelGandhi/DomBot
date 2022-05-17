@@ -9,19 +9,19 @@ function teachObject(self)
     
     sliderTollerance = 0.05;    % 5cm tollerance
     self.to_h.sliderLimits = [... 
-        -self.RADIUS_REACH-sliderTollerance, self.RADIUS_REACH+sliderTollerance; ...
-        -self.RADIUS_REACH-sliderTollerance, self.RADIUS_REACH+sliderTollerance; ...
-        self.pose(3,4), self.pose(3,4)+0.411+sliderTollerance; ...  %0.411 appears to be max simulated reach
+        -4-sliderTollerance, 4+sliderTollerance; ...    %Based on the simulated environment
+        -4-sliderTollerance, 4+sliderTollerance; ...    %Based on the simulated environment
+        1, 2+sliderTollerance; ...                      %Based on the simulated above the table
         -181, 181; ...     & Degrees with +/-1 for overshoot
         -181, 181; ...
         -181, 181]; 
     %-------------------------------
-    InstallTheObjectPanel(self);
-    MakeObjectSliders(self);
-    CreateObjectPositionDisplay(self);
-    CreateObjectOrientationDisplay(self);
-    AddExitButtonObject(self);
-    AssignObjectCallbacks(self);
+%     InstallTheObjectPanel(self);
+%     MakeObjectSliders(self);
+%     CreateObjectPositionDisplay(self);
+%     CreateObjectOrientationDisplay(self);
+%     AddExitButtonObject(self);
+%     AssignObjectCallbacks(self);
 end
 
 function teach_Objectcallback(src, self, j)
@@ -306,7 +306,7 @@ end
 function InstallTheObjectPanel(self)
     %---- install the panel at the side of the figure
     % find the right figure to put it in
-    c = findobj(gca, 'Tag', self.model.name);      % check the current axes
+    c = findobj(gca, 'Tag', self.type);      % check the current axes
     if isempty(c)
         % doesn't exist in current axes, look wider
         c = findobj(0, 'Tag', self.model.name);    % check all figures
@@ -331,7 +331,7 @@ function InstallTheObjectPanel(self)
     
     % create the panel itself
     self.to_h.panel = uipanel(self.to_h.fig, ...
-        'Title', 'Teach Cartesian', ...
+        'Title', 'Teach Object', ...
         'BackGroundColor', self.to_h.bgcol,...
         'Position', [0 0 .25 1]);
     set(self.to_h.panel, 'Units', 'pixels'); % stop automatic resizing
