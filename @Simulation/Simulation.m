@@ -565,10 +565,13 @@ classdef Simulation < handle
                         pointOnPlane = vertOnPlane;
                         point1OnLine = linkTF(1:3,4,i)';
                         point2OnLine = linkTF(1:3,4,i+1)';
-                        myLinePlaneIntersection(self,planeNormal,pointOnPlane,point1OnLine,point2OnLine);
+                        [intersectionPoint,check] = myLinePlaneIntersection(self,planeNormal,pointOnPlane,point1OnLine,point2OnLine);
                         % Check the returned array for intersections and
                         % flag true.
-                        if check == 1 && IsIntersectionPointInsideTriangle(intersectP,vertex(faces(faceIndex,:)',:))
+                        intersectP = intersectionPoint;
+                        triangleVerts = vertex(faces(faceIndex,:)',:);
+                        if check == 1 && myIsIntersectionPointInsideTriangle(self,intersectP,triangleVerts)
+%                         if check == 1 && IsIntersectionPointInsideTriangle(intersectP,vertex(faces(faceIndex,:)',:))
 %                             plot3(intersectP(1),intersectP(2),intersectP(3),'g*');
 %                             display('Intersection');
                             % Intersection found.
@@ -582,32 +585,62 @@ classdef Simulation < handle
             end
         end
         
-        function myLinePlaneIntersection(self,planeNormal,pointOnPlane,point1OnLine,point2OnLine)
-%             intersectionPoint = [0 0 0];
-%             u = point2OnLine - point1OnLine;
-%             w = point1OnLine - pointOnPlane;
-%             D = dot(planeNormal,u);
-%             N = -dot(planeNormal,w);
-%             check = 0; %#ok<NASGU>
-%             if abs(D) < 10^-7        % The segment is parallel to plane
-%                 if N == 0           % The segment lies in plane
-%                     check = 2;
-%                     return
-%                 else
-%                     check = 0;       %no intersection
-%                     return
-%                 end
-%             end
-% 
-%             %compute the intersection parameter
-%             sI = N / D;
-%             intersectionPoint = point1OnLine + sI.*u;
-% 
-%             if (sI < 0 || sI > 1)
-%                 check= 3;          %The intersection point  lies outside the segment, so there is no intersection
-%             else
-%                 check=1;
-%             end
+        function result = myIsIntersectionPointInsideTriangle(self,intersectP,triangleVerts)
+            u = triangleVerts(2,:) - triangleVerts(1,:);
+            v = triangleVerts(3,:) - triangleVerts(1,:);
+
+            uu = dot(u,u);
+            uv = dot(u,v);
+            vv = dot(v,v);
+
+            w = intersectP - triangleVerts(1,:);
+            wu = dot(w,u);
+            wv = dot(w,v);
+
+            D = uv * uv - uu * vv;
+
+            % Get and test parametric coords (s and t)
+            s = (uv * wv - vv * wu) / D;
+            if (s < 0.0 || s > 1.0)        % intersectP is outside Triangle
+                result = 0;
+                return;
+            end
+
+            t = (uv * wu - uu * wv) / D;
+            if (t < 0.0 || (s + t) > 1.0)  % intersectP is outside Triangle
+                result = 0;
+                return;
+            end
+
+            result = 1;                      % intersectP is in Triangle
+        end
+        
+        function [intersectionPoint,check] = myLinePlaneIntersection(self,planeNormal,pointOnPlane,point1OnLine,point2OnLine)
+            intersectionPoint = [0 0 0];
+            u = point2OnLine - point1OnLine;
+            w = point1OnLine - pointOnPlane;
+            D = dot(planeNormal,u);
+            N = -dot(planeNormal,w);
+            check = 0; %#ok<NASGU>
+            if abs(D) < 10^-7        % The segment is parallel to plane
+                if N == 0           % The segment lies in plane
+                    check = 2;
+                    return
+                else
+                    check = 0;       %no intersection
+                    return
+                end
+            end
+
+            %compute the intersection parameter
+            sI = N / D;
+            intersectionPoint = point1OnLine + sI.*u;
+
+            if (sI < 0 || sI > 1)
+                check= 3;          %The intersection point  lies outside the segment, so there is no intersection
+            else
+                check=1;
+            end
         end
         
         %% LinePlaneIntersection - LAB 5
