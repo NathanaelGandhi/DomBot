@@ -151,7 +151,7 @@ classdef MyCobot < EnvironmentObject
                 % If the cameraPoints are not in cameraObject's field of
                 % view, then the non-visable points won't show up on the
                 % image plane plot.
-                self.cameraObject.plot(self.cameraPoints, 'o', 'Color', 'g');
+                self.cameraObject.plot(self.cameraPoints, '.', 'Color', 'k', 'MarkerSize', 20);
             end
         end
         
