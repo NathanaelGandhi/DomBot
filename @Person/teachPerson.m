@@ -8,7 +8,7 @@ function teachPerson(self)
     self.to_h.sliderLabels = ['X','Y','Z','R', 'P', 'Y'];
     
     sliderTollerance = 0.05;    % 5cm tollerance
-    xyLimit = 3;
+    xyLimit = 6;
     self.to_h.sliderLimits = [... 
         -xyLimit-sliderTollerance, xyLimit+sliderTollerance; ...    %Based on the simulated environment
         -xyLimit-sliderTollerance, xyLimit+sliderTollerance; ...    %Based on the simulated environment
