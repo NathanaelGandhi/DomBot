@@ -17,7 +17,6 @@ function teachObject(self)
         -181, 181]; 
     %-------------------------------
     InstallTheObjectPanel(self);
-    GetObjectTransform(self);
     MakeObjectSliders(self);
     CreateObjectPositionDisplay(self);
     CreateObjectOrientationDisplay(self);
@@ -42,7 +41,7 @@ function teach_Objectcallback(src, self, j)
             newval = str2double(get(src, 'String'));
     end
     
-    GetObjectTransform(self);
+%     GetObjectTransform(self);
     
     % Get the angles
     angles = tr2rpy(self.to_h.T6);                        % Radians
@@ -302,11 +301,6 @@ function MakeObjectSliders(self)
             'FontSize', 0.4, ...
             'Tag', sprintf('Edit%d', j));
     end
-end
-
-function GetObjectTransform(self)
-    %---- get the current object pose
-    self.to_h.T6 = self.myFkine(self.qCurrent);
 end
 
 function InstallTheObjectPanel(self)
