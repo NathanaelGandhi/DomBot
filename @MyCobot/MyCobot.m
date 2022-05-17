@@ -14,6 +14,7 @@ classdef MyCobot < EnvironmentObject
         cameraPoints;                      % Array of generated camera points 3xN (N = number of points)
         imagePoints;                       % Array of observed camera points that are projected on an image plane 2xN
         cameraObject;                      % Camera object created from CentralCamera class
+
         
         % Flag used for robotRetreat function
         searchOrRetreatFlag = false;               % 'false' for searching, 'true' for retreating
@@ -30,7 +31,8 @@ classdef MyCobot < EnvironmentObject
         % where N = number of points
         SQUARE_OF_POINTS = [0,     0,     0,     0; ...
                          0.02, -0.02, -0.02,  0.02; ...
-                         0.02,  0.02, -0.02, -0.02];                  
+                         0.02,  0.02, -0.02, -0.02];
+        IDEAL_IMAGE_POINTS = [662 362 362 662; 362 362 662 662];
     end
     
     
@@ -93,10 +95,21 @@ classdef MyCobot < EnvironmentObject
         end
         
         %% To make the robot retreat from a simulated safety symbol using visual servoing and RMRC
-        function robotRetreat(self)
-            
+        function robotRetreat(self, stopSignObject)
+            % if qMatrix is empty, then the robot isn't moving, so calculate
+            % qMatrix trajectory array
+            if isempty(self.qMatrix)
+                
+            else
+                % if qMatrix is not empty, then the robot needs to be
+                % moving
+                
+                self.RunTraj();
+                
+            end
         end
         
+        %% 
         %% Makes robot search for stop sign points using cameraObject
         function searchForStopSign(self, stopSignObject)
             % Updates position of stopSignObject square points
