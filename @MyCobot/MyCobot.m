@@ -12,7 +12,7 @@ classdef MyCobot < EnvironmentObject
         %qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
         cameraPoints;                   % Array of generated camera points
-        cameraObj;                      % Camera object created from CentralCamera class
+        cameraObject;                      % Camera object created from CentralCamera class
     end
     
     % Const Vars
@@ -74,7 +74,7 @@ classdef MyCobot < EnvironmentObject
             self = self@EnvironmentObject(logArg, id, pose, 'mycobot');
             self.workspace = self.SetMyCobotWorkspace();
             self.model = self.GetMyCobotRobot();
-            self.cameraObj = self.GetCamera();
+            self.cameraObject = self.GetCamera();
             self.PlotAndColourRobot();                      % robot,workspace);
         end
         
@@ -93,10 +93,10 @@ classdef MyCobot < EnvironmentObject
             
         end
         
-        %% Generate points on a StopSign to allow MyCobot to detect with cameraObj
-        % In order for cameraObj to detect a StopSign object during 
+        %% Generate points on a StopSign to allow MyCobot to detect with cameraObject
+        % In order for cameraObject to detect a StopSign object during 
         % robotRetreat, the stop sign needs to have a list of points 
-        % to be passed through the cameraObj functions.
+        % to be passed through the cameraObject functions.
         %
         % Use this function to update cameraPoints whenever the
         % stopSignObject changes it's position
@@ -139,11 +139,27 @@ classdef MyCobot < EnvironmentObject
             end
         end
         
+        %% Display plot of image plane for visual servoing
+        % Creates plot for cameraObject image plane.
+        % cameraPoints should be set before this function runs.
+        function displayImagePlane(self)
+            % Checks if cameraPoints are empty
+            if isempty(self.cameraPoints)
+                error('No cameraPoints were generated before displayImagePlane ran');
+            else
+                % Plots the cameraPoints onto the cameraObject image plane.
+                % If the cameraPoints are not in cameraObject's field of
+                % view, then the non-visable points won't show up on the
+                % image plane plot.
+                self.cameraObject.plot(self.cameraPoints, 'o', 'Color', 'g');
+            end
+        end
+        
         %% Create camera for visual servoing
-        function cameraObj = GetCamera(self)
-            cameraObj = CentralCamera('focal', 0.08, 'pixel', 10e-5, ...
+        function cameraObject = GetCamera(self)
+            cameraObject = CentralCamera('focal', 0.08, 'pixel', 10e-5, ...
             'resolution', [1024 1024], 'centre', [512 512],'name', 'MyCobotCamera');
-            cameraObj.T = self.model.fkine(self.qCurrent)*trotx(pi);
+            cameraObject.T = self.model.fkine(self.qCurrent)*trotx(pi);
         end
         
         
@@ -283,7 +299,7 @@ classdef MyCobot < EnvironmentObject
             % that was calculated
             self.model.animate(self.qMatrix(1,:));
             self.qCurrent = self.qMatrix(1,:);
-            self.cameraObj.T = self.model.fkine(self.qCurrent)*trotx(pi);
+            self.cameraObject.T = self.model.fkine(self.qCurrent)*trotx(pi);
             self.qMatrix(1,:) = [];
             drawnow
         end
