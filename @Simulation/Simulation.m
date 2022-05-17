@@ -530,6 +530,7 @@ classdef Simulation < handle
         
         %% Function to check if IsCollision
         function result = myIsCollision(self)
+            % Ignoring values from CollisionAvoidance function
             robot = self.objList{self.MYCOBOT}{1};
             qMatrix = self.objList{self.MYCOBOT}{1}.qMatrix;
             faces = self.objList{self.STOPSIGN}{1}.model.Faces;
