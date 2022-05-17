@@ -11,7 +11,7 @@ classdef Person < EnvironmentObject
             self = self@EnvironmentObject(logArg, id, pose, 'person');
             
             % Read ply file
-            [tris,verts,data] = plyread('Full body PLY/full_body.ply','tri');
+            [tris,verts,data] = plyread('full_body0.001.ply','tri');
             % Set vertex count for use in transforms
             self.vertexCount = size(verts, 1);
             % Scale the colours to be 0-to-1 (they are originally 0-to-255
