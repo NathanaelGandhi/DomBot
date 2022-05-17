@@ -26,13 +26,13 @@ classdef MyCobot < EnvironmentObject
         W = diag([1 1 1 1 0.1 0.1]);  % Weighting matrix for the velocity vector - Calculating trajectory (RMRC)
         EPSILON = 0.1;                  % Damped Least Squares variables
         LAMBDA_MAX = 5E-2;              % Damped Least Squares variables
-        % Set points square to be attached to stopSignObject 3xN
+        % Set array of points to be attached to stopSignObject 3xN
         % where N = number of points
         SQUARE_OF_POINTS = [0,     0,     0,     0; ...
                          0.02, -0.02, -0.02,  0.02; ...
                          0.02,  0.02, -0.02, -0.02];
         % Ideal image points that robotRetreat uses for visual servoing
-        IDEAL_IMAGE_POINTS = [662 362 362 662; 362 362 662 662];];
+        IDEAL_IMAGE_POINTS = [662 362 362 662; 362 362 662 662];
         
         % Image based visual servoing gain value for robotRetreat()
         LAMBDA_GAIN = 0.6;                      
