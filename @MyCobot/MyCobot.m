@@ -22,6 +22,11 @@ classdef MyCobot < EnvironmentObject
         W = diag([1 1 1 0.1 0.1 0.1]);  % Weighting matrix for the velocity vector - Calculating trajectory (RMRC)
         EPSILON = 0.1;                  % Damped Least Squares variables
         LAMBDA_MAX = 5E-2;              % Damped Least Squares variables
+        % Set points square to be attached to stopSignObject 3xN
+        % where N = number of points
+        SQUARE_OF_POINTS = [0,     0,     0,     0; ...
+                         0.02, -0.02, -0.02,  0.02; ...
+                         0.02,  0.02, -0.02, -0.02];                  
     end
     
     
@@ -86,6 +91,52 @@ classdef MyCobot < EnvironmentObject
         %% To make the robot retreat from a simulated safety symbol using visual servoing and RMRC
         function robotRetreat(self)
             
+        end
+        
+        %% Generate points on a StopSign to allow MyCobot to detect with cameraObj
+        % In order for cameraObj to detect a StopSign object during 
+        % robotRetreat, the stop sign needs to have a list of points 
+        % to be passed through the cameraObj functions.
+        %
+        % Use this function to update cameraPoints whenever the
+        % stopSignObject changes it's position
+        %
+        % self = MyCobot object
+        % stopSignObject = StopSign Object
+        % cameraPoints = Array of stop sign points this function generates
+        
+        function generateStopSignPoints(self, stopSignObject)
+            % Clears cameraPoints every time this function runs.
+            % Clearing cameraPoints is important in order to update the
+            % stopSignObject's points when it changes poition.
+            self.cameraPoints = zeros(3,4);
+            
+            % Calculate transform for center of stop sign
+            % Currently, 0.42 is the estimated height to the stop signs
+            % center.
+            % Also rotates in y axis just for the square points to be
+            % aligned properly.
+            stopSignCenterT = stopSignObject.pose*transl(0,0.42,0)*troty(pi/2);
+            
+            
+                       
+            % squareOfTransforms is an array of transforms, where each
+            % transform represents a point from squareOfPoints.
+            squareOfTransforms = zeros(4,4,4);
+            
+            % Sets cameraPoint array
+            for i=1:4
+                
+                % Maps squareOfPoints to the stopSignObject position
+                squareOfTransforms(:,:,i) = stopSignCenterT*transl(transpose(self.SQUARE_OF_POINTS(:,i)));
+                
+                % Sets cameraPoints as the position valuse from
+                % squareOfTransfoms
+                self.cameraPoints(:,i) = squareOfTransforms(1:3, 4, i);
+                
+                % plots cameraPoints onto stop sign
+                % plot3(self.cameraPoints(1,i),self.cameraPoints(2,i),self.cameraPoints(3,i),'o','Color','g');
+            end
         end
         
         %% Create camera for visual servoing
