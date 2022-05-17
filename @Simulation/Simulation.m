@@ -447,6 +447,8 @@ classdef Simulation < handle
                             
                         elseif (self.prevState == self.STANDBY)
                             self.robotState = self.STANDBY;
+                            self.simRunning = 'false';
+                            pause(0.1);
                         else
                             self.logObj.LogInfo('[SIM] ERROR');
                             
@@ -466,8 +468,9 @@ classdef Simulation < handle
             % Main loop for code - runs the robot unless e-stopped
             while (~self.simEStop)
                 while (self.simRunning)
-                   % Run robot state machine
-                   RunRobot(self,1);    % Run robot 1
+                    CollisionAvoidance(self)
+                    % Run robot state machine
+                    RunRobot(self,1);    % Run robot 1
                 end
                 % Log E-Stop activation
                 self.logObj.LogInfo('[SIM] Simulation Stopped');
@@ -492,6 +495,24 @@ classdef Simulation < handle
         %% Function to start "teach person"
         function StartPersonTeach(self)
             self.objList{self.PERSON}{1}.StartPersonTeach();
+        end
+        
+        %% Function for collision avoidance
+        function CollisionAvoidance(self)
+            % get face and vertex data from the sign for intersection checks
+            face = self.objList{self.STOPSIGN}{1}.model.Faces;
+            vertex = self.objList{self.STOPSIGN}{1}.model.Vertices;
+
+            % determine the normal vectors for faces required for intercept checking
+            faceNormals = zeros(size(face,1),3);
+            for faceIndex = 1:size(face,1)
+                v1 = vertex(face(faceIndex,1)',:);
+                v2 = vertex(face(faceIndex,2)',:);
+                v3 = vertex(face(faceIndex,3)',:);
+                % add to normals array
+                faceNormals(faceIndex,:) = unit(cross(v2-v1,v3-v1));
+            end
+            
         end
         
         %% LinePlaneIntersection - LAB 5
