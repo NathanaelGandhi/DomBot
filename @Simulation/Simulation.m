@@ -163,7 +163,7 @@ classdef Simulation < handle
             end
 
             % MyCobot Object
-            myCobotPose = {transl(0, 0, 1)};                                                  % MyCobot Pose
+            myCobotPose = {transl(0, 0, 1)};                                                    % MyCobot Pose
             for i = 1:numel(myCobotPose)
                 self.AddEnvironmentObject(MyCobot(self.logObj, i, myCobotPose{i}));             % Spawn single object
             end
@@ -181,22 +181,22 @@ classdef Simulation < handle
             end
             
             % Stop Sign Objects
-            stopSignPose = {transl(0.5,0.5,1) * trotx(pi/2)};                                                     % Stop Sign Poses
+            stopSignPose = {transl(0.5,0.5,1) * trotx(pi/2)};                                   % Stop Sign Poses
             for i = 1:numel(stopSignPose)
                 self.AddEnvironmentObject(StopSign(self.logObj, i, stopSignPose{i}));           % Spawn single object 
             end
             
             % Barrier Objects
             barrierPose = {transl(-3.25,3.875,0),transl(-1.75,3.875,0),...
-                transl(1.75,3.875,0),transl(3.25,3.875,0)};                                                     % Stop Sign Poses
+                transl(1.75,3.875,0),transl(3.25,3.875,0)};                                     % Barrier Poses
             for i = 1:numel(barrierPose)
-                self.AddEnvironmentObject(Barrier(self.logObj, i, barrierPose{i}));           % Spawn single object 
+                self.AddEnvironmentObject(Barrier(self.logObj, i, barrierPose{i}));             % Spawn single object 
             end
             
             % Light Objects
-            lightPose = {transl(0,1.8,1)};                            % StopButton Poses
+            lightPose = {transl(0,1.8,1)};                                                      % Light Poses
             for i = 1:numel(lightPose)
-                self.AddEnvironmentObject(Light(self.logObj, i, lightPose{i}));       % Spawn single object 
+                self.AddEnvironmentObject(Light(self.logObj, i, lightPose{i}));                 % Spawn single object 
             end
             
             % Person Objects
@@ -213,8 +213,8 @@ classdef Simulation < handle
                 DominoPose = transl(...
                     self.objList{self.MYCOBOT}{1}.pose(13)+xPose, ...
                     self.objList{self.MYCOBOT}{1}.pose(14)+yPose, ...
-                    self.objList{self.MYCOBOT}{1}.pose(15));                         % Domino Poses
-                self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));          % Spawn single object
+                    self.objList{self.MYCOBOT}{1}.pose(15));                        % Domino Poses
+                self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));      % Spawn single object
                 self.objList{self.DOMINO}{i}.dominoState = self.FREE;               % Set as available for pickup logic
             end
         end
