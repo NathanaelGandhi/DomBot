@@ -19,7 +19,7 @@ function teachObject(self)
     InstallTheObjectPanel(self);
     MakeObjectSliders(self);
     CreateObjectPositionDisplay(self);
-%     CreateObjectOrientationDisplay(self);
+    CreateObjectOrientationDisplay(self);
 %     AddExitButtonObject(self);
 %     AssignObjectCallbacks(self);
 end
