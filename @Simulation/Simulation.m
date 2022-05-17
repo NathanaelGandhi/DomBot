@@ -80,6 +80,7 @@ classdef Simulation < handle
             stopSignList = {};
             barrierList = {};
             lightList = {};
+            personList = {};
             self.objList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList, barrierList, lightList};
         end
         
