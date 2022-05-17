@@ -518,9 +518,6 @@ classdef Simulation < handle
             % used to check for collision
             if self.robotState == self.RUNNING
                 % Check for collisions between myCobot and the stop sign
-                robot = self.objList{self.MYCOBOT}{1};
-                qmat = self.objList{self.MYCOBOT}{1}.qMatrix;
-                
                 if (myIsCollision(self))  % IsCollision() replacement   
 %                 if IsCollision(self.objList{self.MYCOBOT}{1}, self.objList{self.MYCOBOT}{1}.qMatrix,...
 %                         face,vertex,faceNormals)
