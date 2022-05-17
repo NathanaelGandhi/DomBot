@@ -24,6 +24,7 @@ classdef Simulation < handle
     
     % Const Vars
     properties(Constant)
+        % Object enum
         GENERIC = 1;
         TABLE = 2;
         MYCOBOT = 3;
@@ -33,6 +34,8 @@ classdef Simulation < handle
         STOPSIGN = 7;
         BARRIER = 8;
         LIGHT = 9;
+        PERSON = 10;
+        
         ROBOTREACH = 0.28;       %280 mm range of motion from MyCobot manual
         ROBOTBASERADIUS = 0.15;  % Exclusion radius for robot base
         DOMINOMAX = 15;             % Max no. of dominoes for path generation
@@ -80,7 +83,10 @@ classdef Simulation < handle
             stopSignList = {};
             barrierList = {};
             lightList = {};
-            self.objList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList, barrierList, lightList};
+            personList = {};
+            self.objList = {genericList, tableList, myCobotList, ...
+                stopButtonList, extinguisherList, dominoList, ...
+                stopSignList, barrierList, lightList, personList};
         end
         
         %Deconstructor
@@ -137,6 +143,9 @@ classdef Simulation < handle
                case 'light'
                    id = numel(self.objList{self.LIGHT} ) + 1;
                    self.objList{self.LIGHT}{id} = envObj; 
+               case 'person'
+                   id = numel(self.objList{self.PERSON} ) + 1;
+                   self.objList{self.PERSON}{id} = envObj; 
                otherwise
                    id = numel(self.objList{self.GENERIC} ) + 1;
                    self.objList{self.GENERIC}{id} = envObj; 
@@ -154,7 +163,7 @@ classdef Simulation < handle
             end
 
             % MyCobot Object
-            myCobotPose = {transl(0, 0, 1)};                                                  % MyCobot Pose
+            myCobotPose = {transl(0, 0, 1)};                                                    % MyCobot Pose
             for i = 1:numel(myCobotPose)
                 self.AddEnvironmentObject(MyCobot(self.logObj, i, myCobotPose{i}));             % Spawn single object
             end
@@ -172,22 +181,28 @@ classdef Simulation < handle
             end
             
             % Stop Sign Objects
-            stopSignPose = {transl(0.5,0.5,1) * trotx(pi/2)};                                                     % Stop Sign Poses
+            stopSignPose = {transl(0.5,0.5,1) * trotx(pi/2)};                                   % Stop Sign Poses
             for i = 1:numel(stopSignPose)
                 self.AddEnvironmentObject(StopSign(self.logObj, i, stopSignPose{i}));           % Spawn single object 
             end
             
             % Barrier Objects
             barrierPose = {transl(-3.25,3.875,0),transl(-1.75,3.875,0),...
-                transl(1.75,3.875,0),transl(3.25,3.875,0)};                                                     % Stop Sign Poses
+                transl(1.75,3.875,0),transl(3.25,3.875,0)};                                     % Barrier Poses
             for i = 1:numel(barrierPose)
-                self.AddEnvironmentObject(Barrier(self.logObj, i, barrierPose{i}));           % Spawn single object 
+                self.AddEnvironmentObject(Barrier(self.logObj, i, barrierPose{i}));             % Spawn single object 
             end
             
             % Light Objects
-            lightPose = {transl(0,1.8,1)};                            % StopButton Poses
+            lightPose = {transl(0,1.8,1)};                                                      % Light Poses
             for i = 1:numel(lightPose)
-                self.AddEnvironmentObject(Light(self.logObj, i, lightPose{i}));       % Spawn single object 
+                self.AddEnvironmentObject(Light(self.logObj, i, lightPose{i}));                 % Spawn single object 
+            end
+            
+            % Person Objects
+            personPose = {transl(0,5,1) * trotx(pi/2)};                                                       % Person Poses
+            for i = 1:numel(personPose)
+                self.AddEnvironmentObject(Person(self.logObj, i, personPose{i}));               % Spawn single object 
             end
             
             % Domino Objects
@@ -198,8 +213,8 @@ classdef Simulation < handle
                 DominoPose = transl(...
                     self.objList{self.MYCOBOT}{1}.pose(13)+xPose, ...
                     self.objList{self.MYCOBOT}{1}.pose(14)+yPose, ...
-                    self.objList{self.MYCOBOT}{1}.pose(15));                         % Domino Poses
-                self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));          % Spawn single object
+                    self.objList{self.MYCOBOT}{1}.pose(15));                        % Domino Poses
+                self.AddEnvironmentObject(Domino(self.logObj, i, DominoPose));      % Spawn single object
                 self.objList{self.DOMINO}{i}.dominoState = self.FREE;               % Set as available for pickup logic
             end
         end
@@ -452,11 +467,6 @@ classdef Simulation < handle
             while (self.simRunning)
                % Run robot state machine
                RunRobot(self,1);    % Run robot 1
-               
-               % TEMP - needs to be fixed so it doesn't log so much
-               if (self.simRunning)
-                   pause(0.01); 
-               end
             end
             % Log E-Stop activation
             self.logObj.LogInfo('[SIM] Simulation Stopped');
@@ -475,6 +485,11 @@ classdef Simulation < handle
         %% Function to start "teach object"
         function StartObjectTeach(self)
             self.objList{self.STOPSIGN}{1}.StartObjectTeach();
+        end
+        
+        %% Function to start "teach person"
+        function StartPersonTeach(self)
+            self.objList{self.PERSON}{1}.StartPersonTeach();
         end
         
         %% Function to set desired domino path
@@ -580,16 +595,12 @@ classdef Simulation < handle
                     pathTF = pathTF * trotz(deg2rad(goalAngleIncrement/2)) * ...
                         transl(0, goalTransIncrement, 0) * ...
                         trotz(deg2rad(goalAngleIncrement/2));
-                    
                 end
-                
             elseif (self.pathType == self.LINE)
                 % INCOMPLETE
-                
             else % ERROR
                 self.logObj.LogInfo('[SIM] ERROR - Domino path not set');
             end
-            
         end
     end
 end
