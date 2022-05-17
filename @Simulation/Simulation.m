@@ -24,6 +24,7 @@ classdef Simulation < handle
     
     % Const Vars
     properties(Constant)
+        % Object enum
         GENERIC = 1;
         TABLE = 2;
         MYCOBOT = 3;
@@ -33,6 +34,8 @@ classdef Simulation < handle
         STOPSIGN = 7;
         BARRIER = 8;
         LIGHT = 9;
+        PERSON = 10;
+        
         ROBOTREACH = 0.28;       %280 mm range of motion from MyCobot manual
         ROBOTBASERADIUS = 0.15;  % Exclusion radius for robot base
         DOMINOMAX = 15;             % Max no. of dominoes for path generation
