@@ -189,9 +189,16 @@ classdef MyCobot < EnvironmentObject
             if isempty(self.cameraPoints)
                 error('No cameraPoints were generated before displayImagePlane ran');
             else
+                % Clears cameraObject plot so it can be updated
                 self.cameraObject.clf;
+                
+                % Plots ideal image points
                 self.cameraObject.plot(self.IDEAL_IMAGE_POINTS,'+', 'Color', 'r');
+                
+                % Holds image plane plot to allow for the second plot
+                % data to be undated.
                 self.cameraObject.hold(true)
+                
                 % Plots the cameraPoints onto the cameraObject image plane.
                 % If the cameraPoints are not in cameraObject's field of
                 % view, then the non-visable points won't show up on the
