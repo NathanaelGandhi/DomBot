@@ -271,7 +271,7 @@ classdef Simulation < handle
                             self.prevState = self.robotState;
                             self.robotState = self.HOVERPOSE;
                             self.logObj.LogInfo('[SIM] Thinking - Moving to free domino');
-                            self.logObj.LogInfo(num2str(self.dominoCurrent));
+                            self.logObj.LogInfo(sprintf('[SIM] Target domino: %s',num2str(self.dominoCurrent)));
                             % Break the loop
                             break;
                         elseif self.objList{self.DOMINO}{self.dominosTotal}.dominoState == self.OCCUPIED
@@ -279,6 +279,7 @@ classdef Simulation < handle
                             % to standby - job done!
                             self.robotState = self.HOMEPOSE;
                             self.logObj.LogInfo('[SIM] Thinking - No free dominos');
+                            break;
                         end
                     end
                     
@@ -468,7 +469,7 @@ classdef Simulation < handle
                 % Automatically scale radius based on domino number
                 radiusArray = [self.DOMINOMIN, self.dominosTotal, self.DOMINOMAX];
                 mappedArray = (radiusArray-min(radiusArray))* ...
-                    (self.ROBOTREACH-self.ROBOTBASERADIUS)/...
+                    ((self.ROBOTREACH-0.01)-self.ROBOTBASERADIUS)/...
                     (max(radiusArray)-min(radiusArray)) + self.ROBOTBASERADIUS;
                 
                 % Start point for circle is located on the x axis => y=0
