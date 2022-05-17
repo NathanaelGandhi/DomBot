@@ -17,7 +17,6 @@ function teachObject(self)
         -181, 181]; 
     %-------------------------------
     InstallTheObjectPanel(self);
-    CheckObjectQlim(self);
     GetObjectTransform(self);
     MakeObjectSliders(self);
     CreateObjectPositionDisplay(self);
@@ -306,16 +305,8 @@ function MakeObjectSliders(self)
 end
 
 function GetObjectTransform(self)
-    %---- get the current robot state
+    %---- get the current object pose
     self.tc.T6 = self.myFkine(self.qCurrent);
-end
-
-function CheckObjectQlim(self)
-    % we need to have qlim set to finite values for a prismatic joint
-    qlim = self.model.qlim;
-    if any(isinf(qlim))
-        error('RTB:teach:badarg', 'Must define joint coordinate limits for prismatic axes, set qlim properties for prismatic Links');
-    end
 end
 
 function InstallTheObjectPanel(self)
