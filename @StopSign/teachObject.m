@@ -29,7 +29,6 @@ function teach_Objectcallback(src, self, j)
     % src      = the object that caused the event
     % name     = name of the robot
     % j        = the index concerned (1..N)
-    steps = 1;
     
     % Get the updated value
     switch get(src, 'Style')
@@ -40,8 +39,6 @@ function teach_Objectcallback(src, self, j)
             % edit box changed, get value
             newval = str2double(get(src, 'String'));
     end
-    
-%     GetObjectTransform(self);
     
     % Get the angles
     angles = tr2rpy(self.pose);                        % Radians
@@ -58,19 +55,9 @@ function teach_Objectcallback(src, self, j)
     end
     
     % Generate new end effector transform
-    self.pose = transl(self.pose(1,4),self.pose(2,4),self.pose(3,4)) ...
-        * rpy2tr(angles);                     % Radians
-   
-    % Compute joint angles for new pose
-    CalculateTraj(self, self.pose, steps)      % self, Transform, steps
-    %self.qMatrix = self.model.ikcon(self.pose, self.qCurrent);
-    for i=1:steps
-        % Move the robot 1 step
-        RunTraj(self)                           % self, increment
-    end
-    
-    % Update (recompute) the robot tool pose
-    GetObjectTransform(self);
+    % Update the Stop Sign model
+    self.UpdatePose(transl(self.pose(1,4),self.pose(2,4),self.pose(3,4)) ...
+        * rpy2tr(angles));                      % Radians
     
     % Update all sliders and edit boxes
     n = size(self.to_h.sliderLabels,2);

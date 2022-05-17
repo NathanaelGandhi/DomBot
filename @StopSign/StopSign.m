@@ -34,5 +34,17 @@ classdef StopSign < EnvironmentObject
         function StartObjectTeach(self)
             self.teachObject();
         end
+        
+        %% Update pose function
+        function UpdatePose(self, pose)
+            % Multiplies the vertices by the inverted domino transfrom 
+            updatedPoints = [self.pose \ [self.model.Vertices,ones(self.vertexCount,1)]']';  
+            % Sets domino pose to new pose
+            self.pose = pose;
+            % Transforming vertices to new pose location
+            updatedPoints = [self.pose * [updatedPoints(:,1:3),ones(self.vertexCount,1)]']'; 
+            % Sets new domino vertex poses
+            self.model.Vertices = updatedPoints(:,1:3);
+        end 
     end
 end
