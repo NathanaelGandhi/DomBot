@@ -11,15 +11,19 @@ classdef MyCobot < EnvironmentObject
         qCurrent = [0, 0, -pi/5, -pi/2 + pi/5, -pi/2, 0];  % Current joint angles
         %qCurrent = [0, 0, 0, -pi/2, -pi/2, 0];  % Current joint angles
         qMatrix;                                % Array of joint angles
-        cameraPoints;                   % Array of generated camera points
+        cameraPoints;                      % Array of generated camera points 3xN (N = number of points)
+        imagePoints;                       % Array of observed camera points that are projected on an image plane 2xN
         cameraObject;                      % Camera object created from CentralCamera class
+        
+        % Flag used for robotRetreat function
+        searchOrRetreatFlag = false;               % 'false' for searching, 'true' for retreating
     end
     
     % Const Vars
     properties(Constant)
         RADIUS_REACH = 0.286;           %280 mm range of motion from MyCobot manual 
         DELTA_T = 0.05;                 % Discrete time step - Calculating trajectory (RMRC)
-        W = diag([1 1 1 0.1 0.1 0.1]);  % Weighting matrix for the velocity vector - Calculating trajectory (RMRC)
+        W = diag([1 1 1 1 0.1 0.1]);  % Weighting matrix for the velocity vector - Calculating trajectory (RMRC)
         EPSILON = 0.1;                  % Damped Least Squares variables
         LAMBDA_MAX = 5E-2;              % Damped Least Squares variables
         % Set points square to be attached to stopSignObject 3xN
@@ -93,6 +97,26 @@ classdef MyCobot < EnvironmentObject
             
         end
         
+        %% Makes robot search for stop sign points using cameraObject
+        function searchForStopSign(self, stopSignObject)
+            % Updates position of stopSignObject square points
+            self.generateStopSignPoints(stopSignObject);
+            % Updates camera image plane plot and changes imagePoints
+            self.displayImagePlane();
+            
+            % When the displayImagePlane function can't display a
+            % cameraPoint on its image plane plot, it would change the
+            % points values (uv) on imagePoints to NaN
+            if isnan(self.imagePoints)
+            else
+                % If all of the imagePoints are real number values, then
+                % the image plane is correctly viewing the entire set of
+                % cameraPoints and should switch modes to the robotRetreat
+                % function.
+                self.searchOrRetreatFlag = true;
+            end
+            
+        end
         %% Generate points on a StopSign to allow MyCobot to detect with cameraObject
         % In order for cameraObject to detect a StopSign object during 
         % robotRetreat, the stop sign needs to have a list of points 
@@ -142,6 +166,8 @@ classdef MyCobot < EnvironmentObject
         %% Display plot of image plane for visual servoing
         % Creates plot for cameraObject image plane.
         % cameraPoints should be set before this function runs.
+        % Returns imagePoints, which are 2xN arrays of points from the image
+        % plane that represent the points the cameraObjejct sees
         function displayImagePlane(self)
             % Checks if cameraPoints are empty
             if isempty(self.cameraPoints)
@@ -151,7 +177,7 @@ classdef MyCobot < EnvironmentObject
                 % If the cameraPoints are not in cameraObject's field of
                 % view, then the non-visable points won't show up on the
                 % image plane plot.
-                self.cameraObject.plot(self.cameraPoints, 'o', 'Color', 'g');
+                self.imagePoints = self.cameraObject.plot(self.cameraPoints, '.', 'Color', 'k', 'MarkerSize', 20);
             end
         end
         
