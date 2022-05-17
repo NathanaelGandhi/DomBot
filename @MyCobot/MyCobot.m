@@ -297,11 +297,5 @@ classdef MyCobot < EnvironmentObject
         function StartCartesianTeach(self)
             self.teachCartesian();
         end
-        
-        %% Function to start "teach object"
-        function StartObjectTeach(self)
-            self.teachObject();
-        end
-        
     end
 end

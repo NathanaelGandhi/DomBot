@@ -1,6 +1,7 @@
 classdef StopSign < EnvironmentObject
     properties
-        model;                      % Class object
+        model;          % Class object
+        to_h;           % Teach Object handle
         vertexCount;    % Vertex count
     end
     
@@ -28,5 +29,22 @@ classdef StopSign < EnvironmentObject
             self.model = trisurf(tris,updatedPoints(:,1), updatedPoints(:,2), updatedPoints(:,3) ...
                 ,'FaceVertexCData',vertexColours,'EdgeColor','interp','EdgeLighting','flat');
         end
+                
+        %% Function to start "teach object"
+        function StartObjectTeach(self)
+            self.teachObject();
+        end
+        
+        %% Update pose function
+        function UpdatePose(self, pose)
+            % Multiplies the vertices by the inverted domino transfrom 
+            updatedPoints = [self.pose \ [self.model.Vertices,ones(self.vertexCount,1)]']';  
+            % Sets domino pose to new pose
+            self.pose = pose;
+            % Transforming vertices to new pose location
+            updatedPoints = [self.pose * [updatedPoints(:,1:3),ones(self.vertexCount,1)]']'; 
+            % Sets new domino vertex poses
+            self.model.Vertices = updatedPoints(:,1:3);
+        end 
     end
 end
