@@ -32,7 +32,10 @@ classdef MyCobot < EnvironmentObject
         SQUARE_OF_POINTS = [0,     0,     0,     0; ...
                          0.02, -0.02, -0.02,  0.02; ...
                          0.02,  0.02, -0.02, -0.02];
+        % Ideal image points that robotRetreat uses for visual servoing
         IDEAL_IMAGE_POINTS = [662 362 362 662; 362 362 662 662];
+        % Steps for robotRetreat function to calculate trajectory
+        ROBOT_RETREAT_STEPS = 50;
     end
     
     
