@@ -521,13 +521,93 @@ classdef Simulation < handle
                 robot = self.objList{self.MYCOBOT}{1};
                 qmat = self.objList{self.MYCOBOT}{1}.qMatrix;
                 
-                if IsCollision(self.objList{self.MYCOBOT}{1}, self.objList{self.MYCOBOT}{1}.qMatrix,...
-                        face,vertex,faceNormals)
+                if (myIsCollision(self))  % IsCollision() replacement   
+%                 if IsCollision(self.objList{self.MYCOBOT}{1}, self.objList{self.MYCOBOT}{1}.qMatrix,...
+%                         face,vertex,faceNormals)
                     % Do something to avoid the collision - probably should
                     % call the robots path generation code here or in the
                     % runSim function.
                 end
             end
+        end
+        
+        function result = myIsCollision(self)
+            robot = self.objList{self.MYCOBOT}{1};
+            qMatrix = self.objList{self.MYCOBOT}{1}.qMatrix;
+            faces = self.objList{self.STOPSIGN}{1}.model.Faces;
+            vertex = self.objList{self.STOPSIGN}{1}.model.Vertices;
+            faceNormals = self.objList{self.STOPSIGN}{1}.model.FaceNormals;
+            % Sets function to return
+            if nargin < 5
+                returnOnceFound = true;
+            end
+            % Set result flag to be false
+            result = false;
+            
+            % Iterate through qMatrix to check every position
+            for qIndex = 1:size(qMatrix,1)
+                % LAB5 - Get the transform of every joint (i.e. start and end of every link)
+                % tr = GetLinkPoses(qMatrix(qIndex,:), robot);
+                % Get the TF for every link (stored in linkTF) - eeTF
+                % disregarded here as it is also stored in linkTF(4x4x6)
+                [eeTF, linkTF] = robot.model.fkine(qMatrix(qIndex,:));
+
+                % Go through each link of myCobot
+                for i = 1 : size(linkTF,3)-1  
+                    % Go through each face (calculated as a plane) for each link
+                    for faceIndex = 1:size(faces,1)
+                        % Find a vertex on the plane (one vertex of the
+                        % current triangle
+                        vertOnPlane = vertex(faces(faceIndex,1)',:);
+                        % Check for intersection with the plane
+%                         [intersectP,check] = LinePlaneIntersection(faceNormals(faceIndex,:),vertOnPlane,linkTF(1:3,4,i)',linkTF(1:3,4,i+1)'); 
+                        planeNormal = faceNormals(faceIndex,:);
+                        pointOnPlane = vertOnPlane;
+                        point1OnLine = linkTF(1:3,4,i)';
+                        point2OnLine = linkTF(1:3,4,i+1)';
+                        myLinePlaneIntersection(self,planeNormal,pointOnPlane,point1OnLine,point2OnLine);
+                        % Check the returned array for intersections and
+                        % flag true.
+                        if check == 1 && IsIntersectionPointInsideTriangle(intersectP,vertex(faces(faceIndex,:)',:))
+%                             plot3(intersectP(1),intersectP(2),intersectP(3),'g*');
+%                             display('Intersection');
+                            % Intersection found.
+                            result = true;
+                            if returnOnceFound
+                                return
+                            end
+                        end
+                    end    
+                end
+            end
+        end
+        
+        function myLinePlaneIntersection(self,planeNormal,pointOnPlane,point1OnLine,point2OnLine)
+%             intersectionPoint = [0 0 0];
+%             u = point2OnLine - point1OnLine;
+%             w = point1OnLine - pointOnPlane;
+%             D = dot(planeNormal,u);
+%             N = -dot(planeNormal,w);
+%             check = 0; %#ok<NASGU>
+%             if abs(D) < 10^-7        % The segment is parallel to plane
+%                 if N == 0           % The segment lies in plane
+%                     check = 2;
+%                     return
+%                 else
+%                     check = 0;       %no intersection
+%                     return
+%                 end
+%             end
+% 
+%             %compute the intersection parameter
+%             sI = N / D;
+%             intersectionPoint = point1OnLine + sI.*u;
+% 
+%             if (sI < 0 || sI > 1)
+%                 check= 3;          %The intersection point  lies outside the segment, so there is no intersection
+%             else
+%                 check=1;
+%             end
         end
         
         %% LinePlaneIntersection - LAB 5
@@ -604,7 +684,7 @@ classdef Simulation < handle
         % Given a robot model (robot), and trajectory (i.e. joint state vector) (qMatrix)
         % and triangle obstacles in the environment (faces,vertex,faceNormals)
         % Returns 'true' if intersection found, 'false' if not
-        function result = IsCollision(robot,qMatrix,faces,vertex,faceNormals,returnOnceFound)
+        function result = IsCollision(robot,qMatrix,faces,vertex,faceNormals)
             
             % Sets function to return
             if nargin < 5
