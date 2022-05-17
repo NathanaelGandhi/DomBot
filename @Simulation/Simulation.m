@@ -425,8 +425,7 @@ classdef Simulation < handle
                
                % TEMP - needs to be fixed so it doesn't log so much
                if (self.simRunning)
-                   pause(0.01);
-                   % self.logObj.LogDebug('[SIM] Sim Running'); 
+                   pause(0.01); 
                end
             end
             % Log E-Stop activation
