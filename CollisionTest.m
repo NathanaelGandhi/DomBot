@@ -2,45 +2,49 @@ clear
 clc
 
 %% Set up sign and robot
+% set up robot
 cobotLog = Log;
 tempPose = transl(0,0,0);
 dombot = MyCobot(cobotLog, 2, tempPose);
 
+% set up sign - Pose doesnt work as envObj is not called 
 signLog = Log;
 tempPose2 = transl(1,0,0);
 sign = StopSign(signLog, 2, tempPose2);
-sign.UpdatePose(transl(1,0,0)*trotz(-pi/2));
 
+% get face and vertex data from the sign for intersection checks
 face = sign.model.Faces;
 vertex = sign.model.Vertices;
 
+% determine the normal vectors for faces required for intercept checking
 faceNormals = zeros(size(face,1),3);
     for faceIndex = 1:size(face,1)
         v1 = vertex(face(faceIndex,1)',:);
         v2 = vertex(face(faceIndex,2)',:);
         v3 = vertex(face(faceIndex,3)',:);
+        % add to normals array
         faceNormals(faceIndex,:) = unit(cross(v2-v1,v3-v1));
     end
 
-sign.UpdatePose(trotz(pi/2));
-
-faceB = sign.model.Faces;
-vertexB = sign.model.Vertices;
-
-faceNormalsB = zeros(size(faceB,1),3);
-    for faceIndex = 1:size(faceB,1)
-        v1 = vertexB(faceB(faceIndex,1)',:);
-        v2 = vertexB(faceB(faceIndex,2)',:);
-        v3 = vertexB(faceB(faceIndex,3)',:);
-        faceNormalsB(faceIndex,:) = unit(cross(v2-v1,v3-v1));
-    end
+% sign.UpdatePose(trotz(pi/2));
+% 
+% faceB = sign.model.Faces;
+% vertexB = sign.model.Vertices;
+% 
+% faceNormalsB = zeros(size(faceB,1),3);
+%     for faceIndex = 1:size(faceB,1)
+%         v1 = vertexB(faceB(faceIndex,1)',:);
+%         v2 = vertexB(faceB(faceIndex,2)',:);
+%         v3 = vertexB(faceB(faceIndex,3)',:);
+%         faceNormalsB(faceIndex,:) = unit(cross(v2-v1,v3-v1));
+%     end
 
 % [tr, allTR] = dombot.model.fkine(dombot.model.getpos);
 
 % for i = 1:dombot.model.n
 %     
 
-%% LinePlaneIntersection
+%% LinePlaneIntersection - LAB 5
 % Given a plane (normal and point) and two points that make up another line, get the intersection
 % Check == 0 if there is no intersection
 % Check == 1 if there is a line plane intersection between the two points
@@ -75,7 +79,7 @@ else
 end
 end
 
-%% IsIntersectionPointInsideTriangle
+%% IsIntersectionPointInsideTriangle - LAB 5
 % Given a point which is known to be on the same plane as the triangle
 % determine if the point is 
 % inside (result == 1) or 
@@ -111,7 +115,7 @@ end
 result = 1;                      % intersectP is in Triangle
 end
 
-%% IsCollision
+%% IsCollision - LAB 5
 % This is based upon the output of questions 2.5 and 2.6
 % Given a robot model (robot), and trajectory (i.e. joint state vector) (qMatrix)
 % and triangle obstacles in the environment (faces,vertex,faceNormals)
