@@ -97,6 +97,12 @@ classdef Simulation < handle
             surf([-4,-4;-4,-4],[-4,4;-4,4],[3,3;0,0],'CData',imread('assets/SideWall.jpg'),'FaceColor','texturemap');
             % Back Wall
             surf([-4,4;-4,4],[-4,-4;-4,-4],[3,3;0,0],'CData',imread('assets/BackWall.jpg'),'FaceColor','texturemap');
+            
+            % Generate Safety 
+            % Floor Exclusion Zone
+            surf([-3,-3;3,3],[-2.1,2.1;-2.1,2.1],[0.01,0.01;0.01,0.01],'CData',imread('assets/ExclusionZone.png'),'FaceColor','texturemap');
+            % Safety Signs
+            % surf([-4,4;-4,4],[-4,-4;-4,-4],[3,3;0,0],'CData',imread('assets/WarningSign.jpg'),'FaceColor','texturemap');
         end
         
         %% Function to add environment objects to the object list
