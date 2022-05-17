@@ -492,6 +492,11 @@ classdef Simulation < handle
             self.objList{self.STOPSIGN}{1}.StartObjectTeach();
         end
         
+        %% Function to start "teach person"
+        function StartPersonTeach(self)
+            self.objList{self.PERSON}{1}.StartPersonTeach();
+        end
+        
         %% Function to set desired domino path
         function SetDominoPath(self, pathInput)
             % UPDATE REQUIRED
