@@ -31,6 +31,8 @@ classdef Simulation < handle
         EXTINGUISHER = 5;
         DOMINO = 6;
         STOPSIGN = 7;
+        BARRIER = 8;
+        LIGHT = 9;
         ROBOTREACH = 0.28;       %280 mm range of motion from MyCobot manual
         ROBOTBASERADIUS = 0.15;  % Exclusion radius for robot base
         DOMINOMAX = 15;             % Max no. of dominoes for path generation
@@ -76,7 +78,9 @@ classdef Simulation < handle
             extinguisherList = {};
             dominoList = {};
             stopSignList = {};
-            self.objList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList};
+            barrierList = {};
+            lightList = {};
+            self.objList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList, barrierList, lightList};
         end
         
         %Deconstructor
@@ -97,6 +101,13 @@ classdef Simulation < handle
             surf([-4,-4;-4,-4],[-4,4;-4,4],[3,3;0,0],'CData',imread('assets/SideWall.jpg'),'FaceColor','texturemap');
             % Back Wall
             surf([-4,4;-4,4],[-4,-4;-4,-4],[3,3;0,0],'CData',imread('assets/BackWall.jpg'),'FaceColor','texturemap');
+            
+            % Generate Safety 
+            % Floor Exclusion Zone
+            surf([-3,-3;3,3],[-2.1,2.1;-2.1,2.1],[0.01,0.01;0.01,0.01],'CData',imread('assets/ExclusionZone.png'),'FaceColor','texturemap');
+            % Safety Signs
+            surf([2.1,1.4;2.1,1.4],[3.95,3.95;3.95,3.95],[0.8,0.8;0.35,0.35],'CData',imread('assets/WarningSign.jpg'),'FaceColor','texturemap');
+            surf([-1.4,-2.1;-1.4,-2.1],[3.95,3.95;3.95,3.95],[0.8,0.8;0.35,0.35],'CData',imread('assets/WarningSign.jpg'),'FaceColor','texturemap');
         end
         
         %% Function to add environment objects to the object list
@@ -120,6 +131,12 @@ classdef Simulation < handle
                case 'stopSign'
                    id = numel(self.objList{self.STOPSIGN} ) + 1;
                    self.objList{self.STOPSIGN}{id} = envObj; 
+               case 'barrier'
+                   id = numel(self.objList{self.BARRIER} ) + 1;
+                   self.objList{self.BARRIER}{id} = envObj; 
+               case 'light'
+                   id = numel(self.objList{self.LIGHT} ) + 1;
+                   self.objList{self.LIGHT}{id} = envObj; 
                otherwise
                    id = numel(self.objList{self.GENERIC} ) + 1;
                    self.objList{self.GENERIC}{id} = envObj; 
@@ -158,6 +175,19 @@ classdef Simulation < handle
             stopSignPose = {transl(0.5,0.5,1) * trotx(pi/2)};                                                     % Stop Sign Poses
             for i = 1:numel(stopSignPose)
                 self.AddEnvironmentObject(StopSign(self.logObj, i, stopSignPose{i}));           % Spawn single object 
+            end
+            
+            % Barrier Objects
+            barrierPose = {transl(-3.25,3.875,0),transl(-1.75,3.875,0),...
+                transl(1.75,3.875,0),transl(3.25,3.875,0)};                                                     % Stop Sign Poses
+            for i = 1:numel(barrierPose)
+                self.AddEnvironmentObject(Barrier(self.logObj, i, barrierPose{i}));           % Spawn single object 
+            end
+            
+            % Light Objects
+            lightPose = {transl(0,1.8,1)};                            % StopButton Poses
+            for i = 1:numel(lightPose)
+                self.AddEnvironmentObject(Light(self.logObj, i, lightPose{i}));       % Spawn single object 
             end
             
             % Domino Objects
@@ -271,7 +301,7 @@ classdef Simulation < handle
                             self.prevState = self.robotState;
                             self.robotState = self.HOVERPOSE;
                             self.logObj.LogInfo('[SIM] Thinking - Moving to free domino');
-                            self.logObj.LogInfo(num2str(self.dominoCurrent));
+                            self.logObj.LogInfo(sprintf('[SIM] Target domino: %s',num2str(self.dominoCurrent)));
                             % Break the loop
                             break;
                         elseif self.objList{self.DOMINO}{self.dominosTotal}.dominoState == self.OCCUPIED
@@ -279,6 +309,7 @@ classdef Simulation < handle
                             % to standby - job done!
                             self.robotState = self.HOMEPOSE;
                             self.logObj.LogInfo('[SIM] Thinking - No free dominos');
+                            break;
                         end
                     end
                     
@@ -424,8 +455,7 @@ classdef Simulation < handle
                
                % TEMP - needs to be fixed so it doesn't log so much
                if (self.simRunning)
-                   pause(0.01);
-                   % self.logObj.LogDebug('[SIM] Sim Running'); 
+                   pause(0.01); 
                end
             end
             % Log E-Stop activation
@@ -468,7 +498,7 @@ classdef Simulation < handle
                 % Automatically scale radius based on domino number
                 radiusArray = [self.DOMINOMIN, self.dominosTotal, self.DOMINOMAX];
                 mappedArray = (radiusArray-min(radiusArray))* ...
-                    (self.ROBOTREACH-self.ROBOTBASERADIUS)/...
+                    ((self.ROBOTREACH-0.01)-self.ROBOTBASERADIUS)/...
                     (max(radiusArray)-min(radiusArray)) + self.ROBOTBASERADIUS;
                 
                 % Start point for circle is located on the x axis => y=0
