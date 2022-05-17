@@ -20,7 +20,7 @@ function teachObject(self)
     MakeObjectSliders(self);
     CreateObjectPositionDisplay(self);
     CreateObjectOrientationDisplay(self);
-%     AddExitButtonObject(self);
+    AddExitButtonObject(self);
 %     AssignObjectCallbacks(self);
 end
 
