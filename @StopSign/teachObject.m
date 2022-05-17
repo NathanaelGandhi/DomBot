@@ -16,9 +16,9 @@ function teachObject(self)
         -181, 181; ...
         -181, 181]; 
     %-------------------------------
-%     InstallTheObjectPanel(self);
-%     MakeObjectSliders(self);
-%     CreateObjectPositionDisplay(self);
+    InstallTheObjectPanel(self);
+    MakeObjectSliders(self);
+    CreateObjectPositionDisplay(self);
 %     CreateObjectOrientationDisplay(self);
 %     AddExitButtonObject(self);
 %     AssignObjectCallbacks(self);
@@ -44,13 +44,13 @@ function teach_Objectcallback(src, self, j)
 %     GetObjectTransform(self);
     
     % Get the angles
-    angles = tr2rpy(self.to_h.T6);                        % Radians
+    angles = tr2rpy(self.pose);                        % Radians
     
     % Assign the relevant updated value
     switch(j)
         case {1,2,3}
             % Got XYZ position just update
-            self.to_h.T6(j,4) = newval;
+            self.pose(j,4) = newval;
         case {4,5,6}
             % Got an angle in radians
             newval = deg2rad(newval);
@@ -58,12 +58,12 @@ function teach_Objectcallback(src, self, j)
     end
     
     % Generate new end effector transform
-    self.to_h.T6 = transl(self.to_h.T6(1,4),self.to_h.T6(2,4),self.to_h.T6(3,4)) ...
+    self.pose = transl(self.pose(1,4),self.pose(2,4),self.pose(3,4)) ...
         * rpy2tr(angles);                     % Radians
    
     % Compute joint angles for new pose
-    CalculateTraj(self, self.to_h.T6, steps)      % self, Transform, steps
-    %self.qMatrix = self.model.ikcon(self.to_h.T6, self.qCurrent);
+    CalculateTraj(self, self.pose, steps)      % self, Transform, steps
+    %self.qMatrix = self.model.ikcon(self.pose, self.qCurrent);
     for i=1:steps
         % Move the robot 1 step
         RunTraj(self)                           % self, increment
@@ -75,12 +75,12 @@ function teach_Objectcallback(src, self, j)
     % Update all sliders and edit boxes
     n = size(self.to_h.sliderLabels,2);
     for k=1:n
-        angles = tr2rpy(self.to_h.T6);
+        angles = tr2rpy(self.pose);
         % Check if XYZ or Angle
         switch(k)
             case {1,2,3}
                 % Get XYZ positions
-                val = self.to_h.T6(k,4);
+                val = self.pose(k,4);
                 % reflect it to edit box
                 set(self.to_h.edit(k), 'String', num2str(val, 3));
                 % reflect it to slider
@@ -97,7 +97,7 @@ function teach_Objectcallback(src, self, j)
     
     % update the display in the teach window
     for i=1:3
-        set(self.to_h.t6.t(i), 'String', sprintf('%.3f', self.to_h.T6(i,4)));
+        set(self.to_h.t6.t(i), 'String', sprintf('%.3f', self.pose(i,4)));
         set(self.to_h.t6.r(i), 'String', sprintf('%.3f', rad2deg(angles(i))));    % Degrees
     end
 end
@@ -167,7 +167,7 @@ function CreateObjectOrientationDisplay(self)
         'Position', [0.3 1-5*self.to_h.height 0.6 self.to_h.height], ...
         'FontUnits', 'normalized', ...
         'FontSize', 0.8, ...
-        'String', sprintf('%.3f', rad2deg(self.to_h.T6(1,3))));    % Degrees
+        'String', sprintf('%.3f', rad2deg(self.pose(1,3))));    % Degrees
     
     % P
     uicontrol(self.to_h.panel, 'Style', 'text', ...
@@ -184,7 +184,7 @@ function CreateObjectOrientationDisplay(self)
         'Position', [0.3 1-6*self.to_h.height 0.6 self.to_h.height], ...
         'FontUnits', 'normalized', ...
         'FontSize', 0.8, ...
-        'String', sprintf('%.3f', rad2deg(self.to_h.T6(2,3))));    % Degrees
+        'String', sprintf('%.3f', rad2deg(self.pose(2,3))));    % Degrees
     
     % Y
     uicontrol(self.to_h.panel, 'Style', 'text', ...
@@ -201,7 +201,7 @@ function CreateObjectOrientationDisplay(self)
         'Position', [0.3 1-7*self.to_h.height 0.6 self.to_h.height], ...
         'FontUnits', 'normalized', ...
         'FontSize', 0.8, ...
-        'String', sprintf('%.3f', rad2deg(self.to_h.T6(3,3))));    % Degrees 
+        'String', sprintf('%.3f', rad2deg(self.pose(3,3))));    % Degrees 
 end
 
 function CreateObjectPositionDisplay(self)
@@ -221,7 +221,7 @@ function CreateObjectPositionDisplay(self)
         'Position', [0.3 1-self.to_h.height 0.6 self.to_h.height], ...
         'FontUnits', 'normalized', ...
         'FontSize', 0.8, ...
-        'String', sprintf('%.3f', self.to_h.T6(1,4)), ...
+        'String', sprintf('%.3f', self.pose(1,4)), ...
         'Tag', 'T6');
     
     % Y
@@ -239,7 +239,7 @@ function CreateObjectPositionDisplay(self)
         'Position', [0.3 1-2*self.to_h.height 0.6 self.to_h.height], ...
         'FontUnits', 'normalized', ...
         'FontSize', 0.8, ...
-        'String', sprintf('%.3f', self.to_h.T6(2,4)));
+        'String', sprintf('%.3f', self.pose(2,4)));
     
     % Z
     uicontrol(self.to_h.panel, 'Style', 'text', ...
@@ -256,7 +256,7 @@ function CreateObjectPositionDisplay(self)
         'Position', [0.3 1-3*self.to_h.height 0.6 self.to_h.height], ...
         'FontUnits', 'normalized', ...
         'FontSize', 0.8, ...
-        'String', sprintf('%.3f', self.to_h.T6(3,4)));
+        'String', sprintf('%.3f', self.pose(3,4)));
 end
 
 function MakeObjectSliders(self)
@@ -277,10 +277,10 @@ function MakeObjectSliders(self)
         switch(j)
             case {1,2,3}
                 % Get XYZ positions
-                val = self.to_h.T6(j,4);
+                val = self.pose(j,4);
             case {4,5,6}
                 % Get the angles                    % Degrees
-                val = rad2deg(self.to_h.T6(j-3,3));
+                val = rad2deg(self.pose(j-3,3));
         end
         self.to_h.slider(j) = uicontrol(self.to_h.panel, 'Style', 'slider', ...
             'Units', 'normalized', ...
@@ -306,10 +306,10 @@ end
 function InstallTheObjectPanel(self)
     %---- install the panel at the side of the figure
     % find the right figure to put it in
-    c = findobj(gca, 'Tag', self.type);      % check the current axes
+    c = findobj();      % check the current axes
     if isempty(c)
         % doesn't exist in current axes, look wider
-        c = findobj(0, 'Tag', self.model.name);    % check all figures
+        c = findobj(0, 'Tag', self.type);    % check all figures
         if isempty(c)
             % create robot in arbitrary pose
             self.model.plot( zeros(1, self.model.n) );
