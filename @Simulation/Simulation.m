@@ -31,6 +31,7 @@ classdef Simulation < handle
         EXTINGUISHER = 5;
         DOMINO = 6;
         STOPSIGN = 7;
+        BARRIER = 8;
         ROBOTREACH = 0.28;       %280 mm range of motion from MyCobot manual
         ROBOTBASERADIUS = 0.15;  % Exclusion radius for robot base
         DOMINOMAX = 15;             % Max no. of dominoes for path generation
@@ -76,7 +77,8 @@ classdef Simulation < handle
             extinguisherList = {};
             dominoList = {};
             stopSignList = {};
-            self.objList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList};
+            barrierList = {};
+            self.objList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList, barrierList};
         end
         
         %Deconstructor
@@ -126,6 +128,9 @@ classdef Simulation < handle
                case 'stopSign'
                    id = numel(self.objList{self.STOPSIGN} ) + 1;
                    self.objList{self.STOPSIGN}{id} = envObj; 
+               case 'barrier'
+                   id = numel(self.objList{self.BARRIER} ) + 1;
+                   self.objList{self.BARRIER}{id} = envObj; 
                otherwise
                    id = numel(self.objList{self.GENERIC} ) + 1;
                    self.objList{self.GENERIC}{id} = envObj; 
@@ -164,6 +169,13 @@ classdef Simulation < handle
             stopSignPose = {transl(0.5,0.5,1) * trotx(pi/2)};                                                     % Stop Sign Poses
             for i = 1:numel(stopSignPose)
                 self.AddEnvironmentObject(StopSign(self.logObj, i, stopSignPose{i}));           % Spawn single object 
+            end
+            
+            % Barrier Objects
+            barrierPose = {transl(-3.25,3.875,0),transl(-1.75,3.875,0),...
+                transl(1.75,3.875,0),transl(3.25,3.875,0)};                                                     % Stop Sign Poses
+            for i = 1:numel(barrierPose)
+                self.AddEnvironmentObject(Barrier(self.logObj, i, barrierPose{i}));           % Spawn single object 
             end
             
             % Domino Objects
