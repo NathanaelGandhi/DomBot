@@ -32,6 +32,7 @@ classdef Simulation < handle
         DOMINO = 6;
         STOPSIGN = 7;
         BARRIER = 8;
+        LIGHT = 9;
         ROBOTREACH = 0.28;       %280 mm range of motion from MyCobot manual
         ROBOTBASERADIUS = 0.15;  % Exclusion radius for robot base
         DOMINOMAX = 15;             % Max no. of dominoes for path generation
@@ -78,7 +79,8 @@ classdef Simulation < handle
             dominoList = {};
             stopSignList = {};
             barrierList = {};
-            self.objList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList, barrierList};
+            lightList = {};
+            self.objList = {genericList, tableList, myCobotList, stopButtonList, extinguisherList, dominoList, stopSignList, barrierList, lightList};
         end
         
         %Deconstructor
@@ -104,7 +106,8 @@ classdef Simulation < handle
             % Floor Exclusion Zone
             surf([-3,-3;3,3],[-2.1,2.1;-2.1,2.1],[0.01,0.01;0.01,0.01],'CData',imread('assets/ExclusionZone.png'),'FaceColor','texturemap');
             % Safety Signs
-            % surf([-4,4;-4,4],[-4,-4;-4,-4],[3,3;0,0],'CData',imread('assets/WarningSign.jpg'),'FaceColor','texturemap');
+            surf([2.1,1.4;2.1,1.4],[3.95,3.95;3.95,3.95],[0.8,0.8;0.35,0.35],'CData',imread('assets/WarningSign.jpg'),'FaceColor','texturemap');
+            surf([-1.4,-2.1;-1.4,-2.1],[3.95,3.95;3.95,3.95],[0.8,0.8;0.35,0.35],'CData',imread('assets/WarningSign.jpg'),'FaceColor','texturemap');
         end
         
         %% Function to add environment objects to the object list
@@ -131,6 +134,9 @@ classdef Simulation < handle
                case 'barrier'
                    id = numel(self.objList{self.BARRIER} ) + 1;
                    self.objList{self.BARRIER}{id} = envObj; 
+               case 'light'
+                   id = numel(self.objList{self.LIGHT} ) + 1;
+                   self.objList{self.LIGHT}{id} = envObj; 
                otherwise
                    id = numel(self.objList{self.GENERIC} ) + 1;
                    self.objList{self.GENERIC}{id} = envObj; 
@@ -176,6 +182,12 @@ classdef Simulation < handle
                 transl(1.75,3.875,0),transl(3.25,3.875,0)};                                                     % Stop Sign Poses
             for i = 1:numel(barrierPose)
                 self.AddEnvironmentObject(Barrier(self.logObj, i, barrierPose{i}));           % Spawn single object 
+            end
+            
+            % Light Objects
+            lightPose = {transl(0,1.8,1)};                            % StopButton Poses
+            for i = 1:numel(lightPose)
+                self.AddEnvironmentObject(Light(self.logObj, i, lightPose{i}));       % Spawn single object 
             end
             
             % Domino Objects
