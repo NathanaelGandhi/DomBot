@@ -434,17 +434,17 @@ classdef Simulation < handle
         
         %% Function to start "teach classic"
         function StartClassicTeach(self)
-            self.objList{3}{1}.StartClassicTeach();
+            self.objList{self.MYCOBOT}{1}.StartClassicTeach();
         end
         
         %% Function to start "teach cartesian"
         function StartCartesianTeach(self)
-            self.objList{3}{1}.StartCartesianTeach();
+            self.objList{self.MYCOBOT}{1}.StartCartesianTeach();
         end
         
         %% Function to start "teach object"
         function StartObjectTeach(self)
-            self.objList{3}{1}.StartObjectTeach();
+            self.objList{self.STOPSIGN}{1}.StartObjectTeach();
         end
         
         %% Function to set desired domino path
