@@ -14,7 +14,7 @@ classdef MyCobot < EnvironmentObject
         cameraPoints;                      % Array of generated camera points 3xN (N = number of points)
         imagePoints;                       % Array of observed camera points that are projected on an image plane 2xN
         cameraObject;                      % Camera object created from CentralCamera class
-        
+        cameraDepth;                       % Distance from cameraObject to cameraPoints (can be array or average distance)
         % Flag used for robotRetreat function
         searchOrRetreatFlag = false;               % 'false' for searching, 'true' for retreating
     end
@@ -26,11 +26,16 @@ classdef MyCobot < EnvironmentObject
         W = diag([1 1 1 1 0.1 0.1]);  % Weighting matrix for the velocity vector - Calculating trajectory (RMRC)
         EPSILON = 0.1;                  % Damped Least Squares variables
         LAMBDA_MAX = 5E-2;              % Damped Least Squares variables
-        % Set points square to be attached to stopSignObject 3xN
+        % Set array of points to be attached to stopSignObject 3xN
         % where N = number of points
         SQUARE_OF_POINTS = [0,     0,     0,     0; ...
                          0.02, -0.02, -0.02,  0.02; ...
-                         0.02,  0.02, -0.02, -0.02];                  
+                         0.02,  0.02, -0.02, -0.02];
+        % Ideal image points that robotRetreat uses for visual servoing
+        IDEAL_IMAGE_POINTS = [662 362 362 662; 362 362 662 662];
+        
+        % Image based visual servoing gain value for robotRetreat()
+        LAMBDA_GAIN = 0.6;                      
     end
     
     
@@ -93,7 +98,48 @@ classdef MyCobot < EnvironmentObject
         end
         
         %% To make the robot retreat from a simulated safety symbol using visual servoing and RMRC
-        function robotRetreat(self)
+        function robotRetreat(self, stopSignObject)
+            % Updates stop sign points
+            self.generateStopSignPoints(stopSignObject);
+            
+            % Updates image plane plot
+            self.displayImagePlane();
+            
+            % Checks if the stop sign points are still visible in the image
+            % plane
+            if isnan(self.imagePoints)
+                % If there are any stop sign points that aren't visible,
+                % the robot would have to switch to searchForStopSign mode
+                self.searchOrRetreatFlag = false;
+                return;
+            end
+            
+            % Calculate the error between the ideal camera image points and
+            % the projected camera image points
+            imageError = self.IDEAL_IMAGE_POINTS - self.imagePoints;
+            
+            % Changes this array from 2x4 into 8x1
+            imageError = imageError(:);
+            
+            % Generates visual motion jacobian
+            visualJacobian = cam.visjac_p(self.imagePoints, self.cameraDepth);
+            
+            cameraVelocity = self.LAMBDA_GAIN * pinv(visualJacobian) * imageError;
+            
+            % Calculate joint and inverse joint jacobian
+            jointJacobian = self.model.jacobn(self.qCurrent);
+            jointJInverse = pinv(jointJacobian);
+            
+            % Calculate qDot (joint velocities)
+            qDot = jointJInverse*cameraVelocity;
+            
+            % Clear qMatrix
+            self.qMatrix = zeros(1,6);
+            
+            % Set qMatrix
+            self.qMatrix(1,:) = self.qCurrent + self.DELTA_T*qDot;
+            
+            self.RunTraj();
             
         end
         
@@ -114,6 +160,7 @@ classdef MyCobot < EnvironmentObject
                 % cameraPoints and should switch modes to the robotRetreat
                 % function.
                 self.searchOrRetreatFlag = true;
+                return;
             end
             
         end
@@ -142,11 +189,13 @@ classdef MyCobot < EnvironmentObject
             % aligned properly.
             stopSignCenterT = stopSignObject.pose*transl(0,0.42,0)*troty(pi/2);
             
-            
-                       
             % squareOfTransforms is an array of transforms, where each
             % transform represents a point from squareOfPoints.
             squareOfTransforms = zeros(4,4,4);
+            
+            % Clears cameraDepth because it needs to get updated every time
+            % cameraPoints are generated/updated
+            self.cameraDepth = zeros(1,6);
             
             % Sets cameraPoint array
             for i=1:4
@@ -160,6 +209,10 @@ classdef MyCobot < EnvironmentObject
                 
                 % plots cameraPoints onto stop sign
                 % plot3(self.cameraPoints(1,i),self.cameraPoints(2,i),self.cameraPoints(3,i),'o','Color','g');
+                
+                % Sets cameraDepth as the distance between cameraObject and
+                % the cameraPoints 
+                self.cameraDepth(i,1) = self.disTr(self.cameraObject.T, squareOfTransforms(:,:,i));
             end
         end
         
@@ -173,6 +226,16 @@ classdef MyCobot < EnvironmentObject
             if isempty(self.cameraPoints)
                 error('No cameraPoints were generated before displayImagePlane ran');
             else
+                % Clears cameraObject plot so it can be updated
+                self.cameraObject.clf;
+                
+                % Plots ideal image points
+                self.cameraObject.plot(self.IDEAL_IMAGE_POINTS,'+', 'Color', 'r');
+                
+                % Holds image plane plot to allow for the second plot
+                % data to be undated.
+                self.cameraObject.hold(true)
+                
                 % Plots the cameraPoints onto the cameraObject image plane.
                 % If the cameraPoints are not in cameraObject's field of
                 % view, then the non-visable points won't show up on the
@@ -328,6 +391,15 @@ classdef MyCobot < EnvironmentObject
             self.cameraObject.T = self.model.fkine(self.qCurrent)*trotx(pi);
             self.qMatrix(1,:) = [];
             drawnow
+        end
+        
+        %% Sim RobotRetreat function
+        function RobotRetreat(self)
+            if self.searchOrRetreatFlag
+                self.robotRetreat(stopSignObject);
+            else
+                self.searchForStopSign(stopSignObject);
+            end
         end
         
         %% Function to start "teach classic"
