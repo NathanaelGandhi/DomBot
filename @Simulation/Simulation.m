@@ -472,14 +472,23 @@ classdef Simulation < handle
             
             while (~self.simEStop)
                 while (self.simRunning)
-                    % Run robot state machine
-                    RunRobot(self,1);    % Run robot 1
-                    collisionCheckFlag = collisionCheckFlag + 1;
-                    % Check for collisions with the stop sign
-                    if collisionCheckFlag > 10
-                    CollisionAvoidance(self);
-                    collisionCheckFlag = 0;
+                    if (self.objList{self.PERSON}{1}.pose(14) < 4)
+                        pause(0.5);
+                    else
+                        RunRobot(self,1);    % Run robot 1
+                        collisionCheckFlag = collisionCheckFlag + 1;
+                        % Check for collisions with the stop sign
+                        if collisionCheckFlag > 10
+                            CollisionAvoidance(self);
+                            collisionCheckFlag = 0;
+                        
+                        end
                     end
+                    % Run robot state machine
+                    
+%                     while (self.objList{self.PERSON}{1}.pose(14) < 4)
+%                         pause(1);
+%                     end
                 end
                 % Log E-Stop activation
                 self.logObj.LogInfo('[SIM] Simulation Stopped');
@@ -561,7 +570,7 @@ classdef Simulation < handle
             result = false;
             
             % Iterate through qMatrix to check every position
-            for qIndex = 1:size(qMatrix,1)
+            for qIndex = 2:size(qMatrix,1)
                 % Get the TF for every link (stored in linkTF) - eeTF
                 % disregarded here as it is also stored in linkTF(4x4x6)
                 [eeTF, linkTF] = robot.model.fkine(qMatrix(qIndex,:));
