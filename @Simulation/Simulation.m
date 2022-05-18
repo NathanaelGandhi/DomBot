@@ -20,6 +20,8 @@ classdef Simulation < handle
         oldState;       % 2nd previous state of arm
         dominoCurrent;  % Current domino being targeted by the robot
         targetPose;     % Target pose of the robot
+        collisionQ;     % Joint angles of the robot at the collision
+        goalQ;          % Joint angles of goal for collision avoidance
     end
     
     % Const Vars
@@ -390,6 +392,7 @@ classdef Simulation < handle
                         self.objList{self.MYCOBOT}{robot}.model.getpos);
                     % Determine the trajectory to the home pose
                     self.objList{self.MYCOBOT}{robot}.JTraJ(qGoal, self.STEPSTOTAL);
+%                     self.objList{self.MYCOBOT}{robot}.CalculateTraj(pose * transl(0,0,self.ROBOTEEOFFSET), self.STEPSTOTAL);
                     % Set the program to run and record last stated
                     self.oldState = self.prevState;
                     self.prevState = self.robotState;
@@ -447,7 +450,6 @@ classdef Simulation < handle
                             
                         elseif (self.prevState == self.STANDBY)
                             self.robotState = self.STANDBY;
-                            self.simRunning = 'false';
                             pause(0.1);
                         else
                             self.logObj.LogInfo('[SIM] ERROR');
@@ -466,15 +468,22 @@ classdef Simulation < handle
         %% Function to run simulation "main" loop
         function RunSim(self)
             % Main loop for code - runs the robot unless e-stopped
+            collisionCheckFlag = 0;
+            
             while (~self.simEStop)
                 while (self.simRunning)
                     % Run robot state machine
                     RunRobot(self,1);    % Run robot 1
+                    collisionCheckFlag = collisionCheckFlag + 1;
                     % Check for collisions with the stop sign
+                    if collisionCheckFlag > 10
                     CollisionAvoidance(self);
+                    collisionCheckFlag = 0;
+                    end
                 end
                 % Log E-Stop activation
                 self.logObj.LogInfo('[SIM] Simulation Stopped');
+                pause(1);
             end
         end
         
@@ -499,61 +508,57 @@ classdef Simulation < handle
         end
         
         %% Function for collision avoidance
-        function CollisionAvoidance(self)
-            % get face and vertex data from the sign for intersection checks
-            face = self.objList{self.STOPSIGN}{1}.model.Faces;
-            vertex = self.objList{self.STOPSIGN}{1}.model.Vertices;
-
-            % determine the normal vectors for faces required for intercept checking
-            faceNormals = zeros(size(face,1),3);
-            for faceIndex = 1:size(face,1)
-                v1 = vertex(face(faceIndex,1)',:);
-                v2 = vertex(face(faceIndex,2)',:);
-                v3 = vertex(face(faceIndex,3)',:);
-                % add to normals array
-                faceNormals(faceIndex,:) = unit(cross(v2-v1,v3-v1));
-            end
-            
+        function CollisionAvoidance(self)            
             % If the sim is running, a qMatrix has been computed and can be
             % used to check for collision
             if self.robotState == self.RUNNING
                 % Check for collisions between myCobot and the stop sign
                 if (myIsCollision(self))  % IsCollision() replacement   
-%                 if IsCollision(self.objList{self.MYCOBOT}{1}, self.objList{self.MYCOBOT}{1}.qMatrix,...
-%                         face,vertex,faceNormals)
-                    % Do something to avoid the collision - probably should
-                    % call the robots path generation code here or in the
-                    % runSim function.
-                    self.logObj.logWarn('Almost a collision');
+                    % Log the collision
+                    self.logObj.LogInfo('[SIM] Collision Detected, Rerouting');
+                    % Reset step count
+                    self.stepsCurrent = 0;
+                    % Recalculate traj and pass into myCobot class - sort
+                    % of works
+                    trajA = jtraj(...
+                        self.objList{self.MYCOBOT}{1}.model.getpos,...
+                        [self.collisionQ(1),0, 0, -pi/2, -pi/2, 0], ...
+                        self.STEPSTOTAL/2);
+                    trajB = jtraj(...
+                        [self.collisionQ(1),0, 0, -pi/2, -pi/2, 0],...
+                        self.goalQ, ...
+                        self.STEPSTOTAL/2);
+                    self.objList{self.MYCOBOT}{1}.qMatrix = [trajA;trajB];
+                    %self.objList{self.MYCOBOT}{1}.JTraJ([self.collisionQ(1),0, 0, -pi/2, -pi/2, 0], self.STEPSTOTAL);
+                    
                 end
             end
         end
         
         %% Function to check if IsCollision
         function result = myIsCollision(self)
-            % Ignoring values from CollisionAvoidance function
-            robot = self.objList{self.MYCOBOT}{1};
-            qMatrix = self.objList{self.MYCOBOT}{1}.qMatrix;
-            faces = self.objList{self.STOPSIGN}{1}.model.Faces;
-            vertex = self.objList{self.STOPSIGN}{1}.model.Vertices;
-            faceNormals = self.objList{self.STOPSIGN}{1}.model.FaceNormals;
-            % Sets function to return
-            if nargin < 5
-                returnOnceFound = true;
-            end
+            % Get parameters for collision checking
+            robot = self.objList{self.MYCOBOT}{1};                          % Current robot
+            qMatrix = self.objList{self.MYCOBOT}{1}.qMatrix;                % Current trajectory
+            faces = self.objList{self.STOPSIGN}{1}.model.Faces;             % Faces, linked to vertices, of stop sign (obstacle)
+            vertex = self.objList{self.STOPSIGN}{1}.model.Vertices;         % Vertices of stop sign (obstacle)
+            faceNormals = self.objList{self.STOPSIGN}{1}.model.FaceNormals; % Normal vectors for each face of the stop sign
+            
+            % Set up function to return once a collision is detected to speed
+            % up processing time.
+            returnOnceFound = true;
             % Set result flag to be false
             result = false;
             
             % Iterate through qMatrix to check every position
             for qIndex = 1:size(qMatrix,1)
-                % LAB5 - Get the transform of every joint (i.e. start and end of every link)
-                % tr = GetLinkPoses(qMatrix(qIndex,:), robot);
                 % Get the TF for every link (stored in linkTF) - eeTF
                 % disregarded here as it is also stored in linkTF(4x4x6)
                 [eeTF, linkTF] = robot.model.fkine(qMatrix(qIndex,:));
+                self.collisionQ = qMatrix(qIndex,:);
 
                 % Go through each link of myCobot
-                for i = 1 : size(linkTF,3)-1  
+                for i = 2 : size(linkTF,3)-1  
                     % Go through each face (calculated as a plane) for each link
                     for faceIndex = 1:size(faces,1)
                         % Find a vertex on the plane (one vertex of the
@@ -575,6 +580,8 @@ classdef Simulation < handle
 %                             plot3(intersectP(1),intersectP(2),intersectP(3),'g*');
 %                             display('Intersection');
                             % Intersection found.
+                            % Set end goalQ of collision traj.
+                            self.goalQ = qMatrix(size(qMatrix,1),:);
                             result = true;
                             if returnOnceFound
                                 return
