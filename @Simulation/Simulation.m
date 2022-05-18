@@ -20,6 +20,8 @@ classdef Simulation < handle
         oldState;       % 2nd previous state of arm
         dominoCurrent;  % Current domino being targeted by the robot
         targetPose;     % Target pose of the robot
+        collisionQ;     % Joint angles of the robot at the collision
+        goalQ;          % Joint angles of goal for collision avoidance
     end
     
     % Const Vars
@@ -390,6 +392,7 @@ classdef Simulation < handle
                         self.objList{self.MYCOBOT}{robot}.model.getpos);
                     % Determine the trajectory to the home pose
                     self.objList{self.MYCOBOT}{robot}.JTraJ(qGoal, self.STEPSTOTAL);
+%                     self.objList{self.MYCOBOT}{robot}.CalculateTraj(pose * transl(0,0,self.ROBOTEEOFFSET), self.STEPSTOTAL);
                     % Set the program to run and record last stated
                     self.oldState = self.prevState;
                     self.prevState = self.robotState;
@@ -447,6 +450,7 @@ classdef Simulation < handle
                             
                         elseif (self.prevState == self.STANDBY)
                             self.robotState = self.STANDBY;
+                            pause(0.1);
                         else
                             self.logObj.LogInfo('[SIM] ERROR');
                             
@@ -464,13 +468,22 @@ classdef Simulation < handle
         %% Function to run simulation "main" loop
         function RunSim(self)
             % Main loop for code - runs the robot unless e-stopped
+            collisionCheckFlag = 0;
+            
             while (~self.simEStop)
                 while (self.simRunning)
-                   % Run robot state machine
-                   RunRobot(self,1);    % Run robot 1
+                    % Run robot state machine
+                    RunRobot(self,1);    % Run robot 1
+                    collisionCheckFlag = collisionCheckFlag + 1;
+                    % Check for collisions with the stop sign
+                    if collisionCheckFlag > 10
+                    CollisionAvoidance(self);
+                    collisionCheckFlag = 0;
+                    end
                 end
                 % Log E-Stop activation
                 self.logObj.LogInfo('[SIM] Simulation Stopped');
+                pause(1);
             end
         end
         
@@ -502,6 +515,151 @@ classdef Simulation < handle
         %% Function to start "teach person"
         function StartPersonTeach(self)
             self.objList{self.PERSON}{1}.StartPersonTeach();
+        end
+        
+        %% Function for collision avoidance
+        function CollisionAvoidance(self)            
+            % If the sim is running, a qMatrix has been computed and can be
+            % used to check for collision
+            if self.robotState == self.RUNNING
+                % Check for collisions between myCobot and the stop sign
+                if (myIsCollision(self))  % IsCollision() replacement   
+                    % Log the collision
+                    self.logObj.LogInfo('[SIM] Collision Detected, Rerouting');
+                    % Reset step count
+                    self.stepsCurrent = 0;
+                    % Recalculate traj and pass into myCobot class - sort
+                    % of works
+                    trajA = jtraj(...
+                        self.objList{self.MYCOBOT}{1}.model.getpos,...
+                        [self.collisionQ(1),0, 0, -pi/2, -pi/2, 0], ...
+                        self.STEPSTOTAL/2);
+                    trajB = jtraj(...
+                        [self.collisionQ(1),0, 0, -pi/2, -pi/2, 0],...
+                        self.goalQ, ...
+                        self.STEPSTOTAL/2);
+                    self.objList{self.MYCOBOT}{1}.qMatrix = [trajA;trajB];
+                    %self.objList{self.MYCOBOT}{1}.JTraJ([self.collisionQ(1),0, 0, -pi/2, -pi/2, 0], self.STEPSTOTAL);
+                    
+                end
+            end
+        end
+        
+        %% Function to check if IsCollision
+        function result = myIsCollision(self)
+            % Get parameters for collision checking
+            robot = self.objList{self.MYCOBOT}{1};                          % Current robot
+            qMatrix = self.objList{self.MYCOBOT}{1}.qMatrix;                % Current trajectory
+            faces = self.objList{self.STOPSIGN}{1}.model.Faces;             % Faces, linked to vertices, of stop sign (obstacle)
+            vertex = self.objList{self.STOPSIGN}{1}.model.Vertices;         % Vertices of stop sign (obstacle)
+            faceNormals = self.objList{self.STOPSIGN}{1}.model.FaceNormals; % Normal vectors for each face of the stop sign
+            
+            % Set up function to return once a collision is detected to speed
+            % up processing time.
+            returnOnceFound = true;
+            % Set result flag to be false
+            result = false;
+            
+            % Iterate through qMatrix to check every position
+            for qIndex = 1:size(qMatrix,1)
+                % Get the TF for every link (stored in linkTF) - eeTF
+                % disregarded here as it is also stored in linkTF(4x4x6)
+                [eeTF, linkTF] = robot.model.fkine(qMatrix(qIndex,:));
+                self.collisionQ = qMatrix(qIndex,:);
+
+                % Go through each link of myCobot
+                for i = 2 : size(linkTF,3)-1  
+                    % Go through each face (calculated as a plane) for each link
+                    for faceIndex = 1:size(faces,1)
+                        % Find a vertex on the plane (one vertex of the
+                        % current triangle
+                        vertOnPlane = vertex(faces(faceIndex,1)',:);
+                        % Check for intersection with the plane
+%                         [intersectP,check] = LinePlaneIntersection(faceNormals(faceIndex,:),vertOnPlane,linkTF(1:3,4,i)',linkTF(1:3,4,i+1)'); 
+                        planeNormal = faceNormals(faceIndex,:);
+                        pointOnPlane = vertOnPlane;
+                        point1OnLine = linkTF(1:3,4,i)';
+                        point2OnLine = linkTF(1:3,4,i+1)';
+                        [intersectionPoint,check] = myLinePlaneIntersection(self,planeNormal,pointOnPlane,point1OnLine,point2OnLine);
+                        % Check the returned array for intersections and
+                        % flag true.
+                        intersectP = intersectionPoint;
+                        triangleVerts = vertex(faces(faceIndex,:)',:);
+                        if check == 1 && myIsIntersectionPointInsideTriangle(self,intersectP,triangleVerts)
+%                         if check == 1 && IsIntersectionPointInsideTriangle(intersectP,vertex(faces(faceIndex,:)',:))
+%                             plot3(intersectP(1),intersectP(2),intersectP(3),'g*');
+%                             display('Intersection');
+                            % Intersection found.
+                            % Set end goalQ of collision traj.
+                            self.goalQ = qMatrix(size(qMatrix,1),:);
+                            result = true;
+                            if returnOnceFound
+                                return
+                            end
+                        end
+                    end    
+                end
+            end
+        end
+        
+        %% Function to check IsIntersectionPointInsideTriange
+        function result = myIsIntersectionPointInsideTriangle(self,intersectP,triangleVerts)
+            u = triangleVerts(2,:) - triangleVerts(1,:);
+            v = triangleVerts(3,:) - triangleVerts(1,:);
+
+            uu = dot(u,u);
+            uv = dot(u,v);
+            vv = dot(v,v);
+
+            w = intersectP - triangleVerts(1,:);
+            wu = dot(w,u);
+            wv = dot(w,v);
+
+            D = uv * uv - uu * vv;
+
+            % Get and test parametric coords (s and t)
+            s = (uv * wv - vv * wu) / D;
+            if (s < 0.0 || s > 1.0)        % intersectP is outside Triangle
+                result = 0;
+                return;
+            end
+
+            t = (uv * wu - uu * wv) / D;
+            if (t < 0.0 || (s + t) > 1.0)  % intersectP is outside Triangle
+                result = 0;
+                return;
+            end
+
+            result = 1;                      % intersectP is in Triangle
+        end
+        
+        %% Function for LinePlaneIntersection
+        function [intersectionPoint,check] = myLinePlaneIntersection(self,planeNormal,pointOnPlane,point1OnLine,point2OnLine)
+            intersectionPoint = [0 0 0];
+            u = point2OnLine - point1OnLine;
+            w = point1OnLine - pointOnPlane;
+            D = dot(planeNormal,u);
+            N = -dot(planeNormal,w);
+            check = 0; %#ok<NASGU>
+            if abs(D) < 10^-7        % The segment is parallel to plane
+                if N == 0           % The segment lies in plane
+                    check = 2;
+                    return
+                else
+                    check = 0;       %no intersection
+                    return
+                end
+            end
+
+            %compute the intersection parameter
+            sI = N / D;
+            intersectionPoint = point1OnLine + sI.*u;
+
+            if (sI < 0 || sI > 1)
+                check= 3;          %The intersection point  lies outside the segment, so there is no intersection
+            else
+                check=1;
+            end
         end
         
         %% Function to set desired domino path
