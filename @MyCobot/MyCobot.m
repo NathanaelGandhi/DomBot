@@ -330,10 +330,12 @@ classdef MyCobot < EnvironmentObject
         % Calculates trapizoidal trajectory of end effector position
         Ti = self.myFkine(self.qCurrent);   % Transform of current end effector position
         Tf = Transform;                         % Transform of final end effector position
-        if steps == 1
-            s = 1;
+        if steps < 2
+            self.qMatrix(1,:) = self.model.ikcon(Transform,self.qCurrent);
+            return;
         else
             s = lspb(0,1,steps);               % Trapezoidal trajectory scalar
+            self.qMatrix(1,:) = self.qCurrent; 
         end
         for i=1:steps
             x(:,i) = (1-s(i))*Ti(1:3, 4)+s(i)*Tf(1:3,4);
@@ -342,10 +344,6 @@ classdef MyCobot < EnvironmentObject
             % End effector rotation changes to inputted tramsform
             theta(:,i) = (1-s(i))*tr2rpy(Ti)+s(i)*tr2rpy(Tf);            
         end
-        % Sets first step of qMatrix
-        TFirstStep = rpy2tr(theta(:,1)');
-        TFirstStep(1:3,4) = x(:,1);
-        self.qMatrix(1,:) = self.model.ikcon(TFirstStep,self.qCurrent);
         
         for i=1:steps-1
             T = self.myFkine(self.qMatrix(i,:));
@@ -354,9 +352,9 @@ classdef MyCobot < EnvironmentObject
             Ra = T(1:3, 1:3);                % Current end-effector rotation matrix
 
             Rdot = (1/self.DELTA_T)*(Rd - Ra);       % Calculate rotation matrix error (see RMRC lectures)
-            S = Rdot*Ra;                      % Skew symmetric! S(\omega)
+            S = Rdot*Ra';                      % Skew symmetric! S(\omega)
             linear_velocity = (1/self.DELTA_T)*deltaX;
-            angular_velocity = [S(3,2);S(1,3);S(2,1)];  % Check the structure of Skew Symmetric matrix! Extract the angular velocities. (see RMRC lectures)
+            angular_velocity = 2*[S(3,2);S(1,3);S(2,1)];  % Check the structure of Skew Symmetric matrix! Extract the angular velocities. (see RMRC lectures)
             xdot = self.W*[linear_velocity; angular_velocity];              % Calculate end-effector velocity to reach next waypoint.
             J = self.model.jacob0(self.qMatrix(i,:),'rpy');                 % Get Jacobian at current joint state (Use RPY)
             mu = sqrt(det(J*J'));
@@ -366,15 +364,17 @@ classdef MyCobot < EnvironmentObject
                 lambda = 0;
             end
             invJ = inv(J'*J+lambda*eye(6))*J'; % Apply Damped Least Squares pseudoinverse
-            qdot(i,:) = (invJ*xdot)'; % Solve the RMRC equation (you may need to transpose the         vector)
+            qdot(i,:) = (invJ*xdot)'; % Solve the RMRC equation (you may need to transpose the vector)
+            self.qMatrix(i+1,:) = self.qMatrix(i,:) + self.DELTA_T*qdot(i,:); % Update next joint state based on joint velocities
+            
             for j = 1:6 % Loop through joints 1 to 6
-                if qdot(i,j)*self.DELTA_T < self.model.qlim(j,1)% If next joint angle is lower than joint limit...
-                    qdot(i,j) = 0; % Stop the motor
-                elseif qdot(i,j)*self.DELTA_T > self.model.qlim(j,2) % If next joint angle is greater than joint limit ...
-                    qdot(i,j) = 0; % Stop the motor
+                if self.qMatrix(i+1,j) < self.model.qlim(j,1)% If next joint angle is lower than joint limit...
+                    self.qMatrix(i+1,j) = self.qMatrix(i,j); % Stop the motor
+                elseif self.qMatrix(i+1,j) > self.model.qlim(j,2) % If next joint angle is greater than joint limit ...
+                    self.qMatrix(i+1,j) = self.qMatrix(i,j); % Stop the motor
                 end
             end
-            self.qMatrix(i+1,:) = self.qMatrix(i,:) + self.DELTA_T*qdot(i,:); % Update next joint state based on joint velocities
+            
         end
         end
         %% calculate quintic polynomial trajectory (to work with RunTraj)
