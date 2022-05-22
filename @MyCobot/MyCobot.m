@@ -72,6 +72,9 @@ classdef MyCobot < EnvironmentObject
             L(6).qlim = (pi/180)*[-175 175];
             
             model = SerialLink(L, 'name', name);
+            
+            % IMPORTANT FOR RMRC (fixes orientation of end effector)
+            model.tool = trotz(-pi/2);
         end
         
     end
@@ -357,7 +360,7 @@ classdef MyCobot < EnvironmentObject
             linear_velocity = (1/self.DELTA_T)*deltaX;
             angular_velocity = [S(3,2);S(1,3);S(2,1)];  % Check the structure of Skew Symmetric matrix! Extract the angular velocities. (see RMRC lectures)
             xdot = self.W*[linear_velocity; angular_velocity];              % Calculate end-effector velocity to reach next waypoint.
-            J = self.model.jacob0(self.qMatrix(i,:));                 % Get Jacobian at current joint state
+            J = self.model.jacob0(self.qMatrix(i,:),'rpy');                 % Get Jacobian at current joint state (Use RPY)
             mu = sqrt(det(J*J'));
             if mu < self.EPSILON  % If manipulability is less than given threshold
                 lambda = (1-(mu/self.EPSILON)^2)*self.LAMBDA_MAX; % Damping coefficient (try scaling it)
