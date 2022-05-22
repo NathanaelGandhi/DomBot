@@ -62,6 +62,7 @@ classdef MyCobot < EnvironmentObject
             L(2).offset = pi/2;
             L(4).offset = -pi/2;
             L(5).offset = pi;
+            L(6).offset = -pi/2;
             
             %limits
             L(1).qlim = (pi/180)*[-200 200];
@@ -72,9 +73,6 @@ classdef MyCobot < EnvironmentObject
             L(6).qlim = (pi/180)*[-175 175];
             
             model = SerialLink(L, 'name', name);
-            
-            % IMPORTANT FOR RMRC (fixes orientation of end effector)
-            model.tool = trotz(-pi/2);
         end
         
     end
