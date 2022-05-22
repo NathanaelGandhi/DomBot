@@ -317,7 +317,7 @@ classdef MyCobot < EnvironmentObject
         end   
         
         
-        %% calculates jtraj (with RMRC)
+        %% Calculates resolved motion rate control tajectory
         function CalculateTraj(self, Transform, steps)
         % CalculateTraj
         % Incorporates RMRC and damped least squares
