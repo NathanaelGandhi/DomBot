@@ -23,8 +23,8 @@ classdef MyCobot < EnvironmentObject
     properties(Constant)
         RADIUS_REACH = 0.286;           %280 mm range of motion from MyCobot manual 
         DELTA_T = 0.05;                 % Discrete time step - Calculating trajectory (RMRC)
-        W = diag([1 1 1 1 0.1 0.1]);  % Weighting matrix for the velocity vector - Calculating trajectory (RMRC)
-        EPSILON = 0.1;                  % Damped Least Squares variables
+        W = diag([1 1 1 0.1 0.1 0.1]);  % Weighting matrix for the velocity vector - Calculating trajectory (RMRC)
+        EPSILON = 0.3;                  % Damped Least Squares variables
         LAMBDA_MAX = 5E-2;              % Damped Least Squares variables
         % Set array of points to be attached to stopSignObject 3xN
         % where N = number of points
@@ -32,10 +32,12 @@ classdef MyCobot < EnvironmentObject
                          0.02, -0.02, -0.02,  0.02; ...
                          0.02,  0.02, -0.02, -0.02];
         % Ideal image points that robotRetreat uses for visual servoing
-        IDEAL_IMAGE_POINTS = [662 362 362 662; 362 362 662 662];
-        
+%         IDEAL_IMAGE_POINTS = [662 362 362 662; 362 362 662 662];
+        IDEAL_IMAGE_POINTS = [592 432 432 592; 432 432 592 592];
+
         % Image based visual servoing gain value for robotRetreat()
-        LAMBDA_GAIN = 0.6;                      
+        LAMBDA_GAIN = 1;
+        
     end
     
     
@@ -62,6 +64,7 @@ classdef MyCobot < EnvironmentObject
             L(2).offset = pi/2;
             L(4).offset = -pi/2;
             L(5).offset = pi;
+            L(6).offset = -pi/2;
             
             %limits
             L(1).qlim = (pi/180)*[-200 200];
@@ -107,11 +110,11 @@ classdef MyCobot < EnvironmentObject
             
             % Checks if the stop sign points are still visible in the image
             % plane
-            if isnan(self.imagePoints)
+            if sum(isnan(self.imagePoints), 'ALL')
                 % If there are any stop sign points that aren't visible,
                 % the robot would have to switch to searchForStopSign mode
                 self.searchOrRetreatFlag = false;
-                return;
+                return
             end
             
             % Calculate the error between the ideal camera image points and
@@ -119,28 +122,25 @@ classdef MyCobot < EnvironmentObject
             imageError = self.IDEAL_IMAGE_POINTS - self.imagePoints;
             
             % Changes this array from 2x4 into 8x1
-            imageError = imageError(:);
-            
+            imageError = imageError(:);         
             % Generates visual motion jacobian
-            visualJacobian = cam.visjac_p(self.imagePoints, self.cameraDepth);
+            visualJacobian = self.cameraObject.visjac_p(self.imagePoints, self.cameraDepth(3,:)');
             
             cameraVelocity = self.LAMBDA_GAIN * pinv(visualJacobian) * imageError;
             
-            % Calculate joint and inverse joint jacobian
-            jointJacobian = self.model.jacobn(self.qCurrent);
-            jointJInverse = pinv(jointJacobian);
+            cameraNextPos = self.cameraObject.T*...
+                            transl(cameraVelocity(1),...
+                            cameraVelocity(2),...
+                            cameraVelocity(3))*...
+                            trotx(cameraVelocity(4)-pi)* ...
+                            troty(-cameraVelocity(5))*...
+                            trotz(-cameraVelocity(6));
             
-            % Calculate qDot (joint velocities)
-            qDot = jointJInverse*cameraVelocity;
-            
-            % Clear qMatrix
-            self.qMatrix = zeros(1,6);
-            
-            % Set qMatrix
-            self.qMatrix(1,:) = self.qCurrent + self.DELTA_T*qDot;
-            
-            self.RunTraj();
-            
+                        
+            self.CalculateTraj(cameraNextPos,2);
+            for i=1:2
+                self.RunTraj();
+            end
         end
         
         %% Makes robot search for stop sign points using cameraObject
@@ -153,7 +153,7 @@ classdef MyCobot < EnvironmentObject
             % When the displayImagePlane function can't display a
             % cameraPoint on its image plane plot, it would change the
             % points values (uv) on imagePoints to NaN
-            if isnan(self.imagePoints)
+            if sum(isnan(self.imagePoints), 'ALL')
             else
                 % If all of the imagePoints are real number values, then
                 % the image plane is correctly viewing the entire set of
@@ -195,7 +195,8 @@ classdef MyCobot < EnvironmentObject
             
             % Clears cameraDepth because it needs to get updated every time
             % cameraPoints are generated/updated
-            self.cameraDepth = zeros(1,6);
+            self.cameraDepth = zeros(4,1);
+%             self.cameraDepth = self.disTr(self.cameraObject.T, stopSignCenterT);
             
             % Sets cameraPoint array
             for i=1:4
@@ -210,10 +211,10 @@ classdef MyCobot < EnvironmentObject
                 % plots cameraPoints onto stop sign
                 % plot3(self.cameraPoints(1,i),self.cameraPoints(2,i),self.cameraPoints(3,i),'o','Color','g');
                 
-                % Sets cameraDepth as the distance between cameraObject and
-                % the cameraPoints 
-                self.cameraDepth(i,1) = self.disTr(self.cameraObject.T, squareOfTransforms(:,:,i));
             end
+            % Sets cameraDepth as the distance between cameraObject and
+            % the cameraPoints 
+            self.cameraDepth = homtrans(inv(self.cameraObject.T), self.cameraPoints);
         end
         
         %% Display plot of image plane for visual servoing
@@ -314,7 +315,7 @@ classdef MyCobot < EnvironmentObject
         end   
         
         
-        %% calculates jtraj (with RMRC)
+        %% Calculates resolved motion rate control tajectory
         function CalculateTraj(self, Transform, steps)
         % CalculateTraj
         % Incorporates RMRC and damped least squares
@@ -329,10 +330,12 @@ classdef MyCobot < EnvironmentObject
         % Calculates trapizoidal trajectory of end effector position
         Ti = self.myFkine(self.qCurrent);   % Transform of current end effector position
         Tf = Transform;                         % Transform of final end effector position
-        if steps == 1
-            s = 1;
+        if steps < 2
+            self.qMatrix(1,:) = self.model.ikcon(Transform,self.qCurrent);
+            return;
         else
             s = lspb(0,1,steps);               % Trapezoidal trajectory scalar
+            self.qMatrix(1,:) = self.qCurrent; 
         end
         for i=1:steps
             x(:,i) = (1-s(i))*Ti(1:3, 4)+s(i)*Tf(1:3,4);
@@ -341,10 +344,6 @@ classdef MyCobot < EnvironmentObject
             % End effector rotation changes to inputted tramsform
             theta(:,i) = (1-s(i))*tr2rpy(Ti)+s(i)*tr2rpy(Tf);            
         end
-        % Sets first step of qMatrix
-        TFirstStep = rpy2tr(theta(:,1)');
-        TFirstStep(1:3,4) = x(:,1);
-        self.qMatrix(1,:) = self.model.ikcon(TFirstStep,self.qCurrent);
         
         for i=1:steps-1
             T = self.myFkine(self.qMatrix(i,:));
@@ -353,27 +352,32 @@ classdef MyCobot < EnvironmentObject
             Ra = T(1:3, 1:3);                % Current end-effector rotation matrix
 
             Rdot = (1/self.DELTA_T)*(Rd - Ra);       % Calculate rotation matrix error (see RMRC lectures)
-            S = Rdot*Ra;                      % Skew symmetric! S(\omega)
+            S = Rdot*Ra';                      % Skew symmetric! S(\omega)
             linear_velocity = (1/self.DELTA_T)*deltaX;
-            angular_velocity = [S(3,2);S(1,3);S(2,1)];  % Check the structure of Skew Symmetric matrix! Extract the angular velocities. (see RMRC lectures)
+            angular_velocity = 2*[S(3,2);S(1,3);S(2,1)];  % Check the structure of Skew Symmetric matrix! Extract the angular velocities. (see RMRC lectures)
             xdot = self.W*[linear_velocity; angular_velocity];              % Calculate end-effector velocity to reach next waypoint.
-            J = self.model.jacob0(self.qMatrix(i,:));                 % Get Jacobian at current joint state
-            mu = sqrt(det(J*J'));
-            if mu < self.EPSILON  % If manipulability is less than given threshold
-                lambda = (1-(mu/self.EPSILON)^2)*self.LAMBDA_MAX; % Damping coefficient (try scaling it)
+            J = self.model.jacob0(self.qMatrix(i,:),'rpy');                 % Get Jacobian at current joint state (Use RPY)
+%             mu = sqrt(det(J*J'));
+            muT = self.model.maniplty(self.qMatrix(i,:),'T');
+            muR = self.model.maniplty(self.qMatrix(i,:),'R');
+            muMin = min([muT muR]);
+            if muMin < self.EPSILON  % If manipulability is less than given threshold
+                lambda = (1-(muMin/self.EPSILON)^2)*self.LAMBDA_MAX; % Damping coefficient (try scaling it)
             else
                 lambda = 0;
             end
             invJ = inv(J'*J+lambda*eye(6))*J'; % Apply Damped Least Squares pseudoinverse
-            qdot(i,:) = (invJ*xdot)'; % Solve the RMRC equation (you may need to transpose the         vector)
+            qdot(i,:) = (invJ*xdot)'; % Solve the RMRC equation (you may need to transpose the vector)
+            self.qMatrix(i+1,:) = self.qMatrix(i,:) + self.DELTA_T*qdot(i,:); % Update next joint state based on joint velocities
+            
             for j = 1:6 % Loop through joints 1 to 6
-                if qdot(i,j)*self.DELTA_T < self.model.qlim(j,1)% If next joint angle is lower than joint limit...
-                    qdot(i,j) = 0; % Stop the motor
-                elseif qdot(i,j)*self.DELTA_T > self.model.qlim(j,2) % If next joint angle is greater than joint limit ...
-                    qdot(i,j) = 0; % Stop the motor
+                if self.qMatrix(i+1,j) < self.model.qlim(j,1)% If next joint angle is lower than joint limit...
+                    self.qMatrix(i+1,j) = self.qMatrix(i,j); % Stop the motor
+                elseif self.qMatrix(i+1,j) > self.model.qlim(j,2) % If next joint angle is greater than joint limit ...
+                    self.qMatrix(i+1,j) = self.qMatrix(i,j); % Stop the motor
                 end
             end
-            self.qMatrix(i+1,:) = self.qMatrix(i,:) + self.DELTA_T*qdot(i,:); % Update next joint state based on joint velocities
+            
         end
         end
         %% calculate quintic polynomial trajectory (to work with RunTraj)
@@ -394,7 +398,7 @@ classdef MyCobot < EnvironmentObject
         end
         
         %% Sim RobotRetreat function
-        function RobotRetreat(self)
+        function RobotRetreat(self, stopSignObject)
             if self.searchOrRetreatFlag
                 self.robotRetreat(stopSignObject);
             else
